@@ -174,9 +174,12 @@ export default function SeasonHubPage() {
     setWorkingXI(lineup.playing11Ids);
     setBattingOrder(lineup.battingOrder && lineup.battingOrder.length === 11 ? lineup.battingOrder : lineup.playing11Ids);
     setCaptainId(lineup.captainId || lineup.playing11Ids[0]);
-    setDesignatedWkId(lineup.wkId || lineup.playing11Ids[0]);
+    const finalWk = lineup.wkId || lineup.playing11Ids[0];
+    setDesignatedWkId(finalWk);
     if (lineup.bowlerPool352) {
-      const squadBowlerIds = currentSquad.filter(p => TeamMaker.isBowler(p) && p.role !== 'WK').map(p => p.id);
+      const squadBowlerIds = currentSquad
+        .filter(p => TeamMaker.isBowler(p) && p.role !== 'WK' && !p.subType?.startsWith('WK') && p.id !== finalWk)
+        .map(p => p.id);
       const cleanPP = (lineup.bowlerPool352.powerplayBowlerIds || []).filter(id => squadBowlerIds.includes(id));
       const d17 = lineup.bowlerPool352.deathOver17_19BowlerId || lineup.bowlerPool352.deathBowlerIds?.[0] || '';
       const d18 = lineup.bowlerPool352.deathOver18_20BowlerId || lineup.bowlerPool352.deathBowlerIds?.[1] || '';
@@ -564,7 +567,7 @@ export default function SeasonHubPage() {
       setDeathOver17_19BowlerId(prev => (prev && candidateBowlerIds.includes(prev) ? prev : ''));
       setDeathOver18_20BowlerId(prev => (prev && candidateBowlerIds.includes(prev) ? prev : ''));
     }
-  }, [candidateBowlerIds, quotaResult.quotas]);
+  }, [candidateBowlerIds, quotaResult.quotas, midBowlerIds, ppBowlerIds, deathBowlerIds]);
 
   const selectedCount = workingXI.length;
   const overseasCount = selectedPlayers.filter(p => p.isOverseas).length;
@@ -584,7 +587,8 @@ export default function SeasonHubPage() {
     workingXI.includes(deathOver18_20BowlerId) &&
     quotaResult.ppDeathOverlapCount <= 1
   );
-  const isMidValid = midBowlerIds.length === 5 && midBowlerIds.every(id => (quotaResult.quotas[id]?.usableMiddleOvers ?? 0) > 0);
+  const validMidBowlerIds = useMemo(() => midBowlerIds.filter(id => candidateBowlerIds.includes(id)), [midBowlerIds, candidateBowlerIds]);
+  const isMidValid = validMidBowlerIds.length === 5 && validMidBowlerIds.every(id => (quotaResult.quotas[id]?.usableMiddleOvers ?? 0) > 0);
   const isBackupValid = Boolean(backupBowlerId && workingXI.includes(backupBowlerId));
 
   const isStage2Valid = isStage1Valid && isPPValid && isDeathValid && isMidValid && isBackupValid;
@@ -605,10 +609,16 @@ export default function SeasonHubPage() {
 
     if (quotaResult.ppDeathOverlapCount > 1) blockers.push('Anti-Starvation violation: At most 1 bowler can bowl in both Powerplay and Death');
 
-    if (midBowlerIds.length !== 5) {
-      blockers.push(`Select exactly 5 Middle Overs bowlers (currently ${midBowlerIds.length})`);
+    const ghostMids = midBowlerIds.filter(id => !candidateBowlerIds.includes(id));
+    if (ghostMids.length > 0) {
+      const names = ghostMids.map(id => selectedPlayers.find(p => p.id === id)?.name || id).join(', ');
+      blockers.push(`Middle overs error: ${names} is a wicketkeeper/non-bowler. Please uncheck or click Auto-Fix.`);
+    }
+
+    if (validMidBowlerIds.length !== 5) {
+      blockers.push(`Select exactly 5 Middle Overs bowlers (currently ${validMidBowlerIds.length})`);
     } else {
-      const exhaustedMids = midBowlerIds.filter(id => (quotaResult.quotas[id]?.usableMiddleOvers ?? 0) === 0);
+      const exhaustedMids = validMidBowlerIds.filter(id => (quotaResult.quotas[id]?.usableMiddleOvers ?? 0) === 0);
       if (exhaustedMids.length > 0) {
         const names = exhaustedMids.map(id => selectedPlayers.find(p => p.id === id)?.name || id).join(', ');
         blockers.push(`Middle overs error: ${names} has 0 usable middle overs (exhausted by PP & Death). Uncheck them from Middle Overs.`);
@@ -3135,7 +3145,7 @@ export default function SeasonHubPage() {
                   <div className="p-2.5 rounded-lg bg-tile border border-borderDark">
                     <div className="text-slate-400 text-[10px]">MIDDLE OVERS (OV 7-16)</div>
                     <div className="text-base font-bold text-slate-100 mt-1 flex items-center justify-between">
-                      <span>{midBowlerIds.length} / 5 Bowlers</span>
+                      <span>{validMidBowlerIds.length} / 5 Bowlers</span>
                       <span className="text-[11px] text-brand-gold">10 Overs</span>
                     </div>
                   </div>
@@ -3458,8 +3468,8 @@ export default function SeasonHubPage() {
                           Select 5 Bowlers • 10 Overs Total
                         </p>
                       </div>
-                      <span className={`px-2 py-0.5 rounded font-bold ${midBowlerIds.length === 5 ? 'bg-brand-emerald/20 text-brand-emerald border border-brand-emerald/40' : 'bg-canvas border border-borderDark text-amber-400'}`}>
-                        {midBowlerIds.length} / 5
+                      <span className={`px-2 py-0.5 rounded font-bold ${validMidBowlerIds.length === 5 ? 'bg-brand-emerald/20 text-brand-emerald border border-brand-emerald/40' : 'bg-canvas border border-borderDark text-amber-400'}`}>
+                        {validMidBowlerIds.length} / 5
                       </span>
                     </div>
 
@@ -3485,7 +3495,7 @@ export default function SeasonHubPage() {
                                 <input
                                   type="checkbox"
                                   checked={isSelected}
-                                  disabled={!isSelected && (isExhausted || midBowlerIds.length >= 5)}
+                                  disabled={!isSelected && (isExhausted || validMidBowlerIds.length >= 5)}
                                   onChange={() => toggleMidBowler(p.id)}
                                   className="rounded border-borderDark text-brand-emerald focus:ring-0 cursor-pointer disabled:cursor-not-allowed"
                                 />

@@ -549,8 +549,9 @@ export class TeamMaker {
     }
 
     // 6. PHASE E: 3-5-2 Bowler Pool Allocation
-    const activeBowlers = selected.filter(p => TeamMaker.isBowler(p));
-    const poolSource = activeBowlers.length >= 6 ? activeBowlers : selected;
+    const activeBowlers = selected.filter(p => TeamMaker.isBowler(p) && p.role !== 'WK' && !p.subType?.startsWith('WK'));
+    const nonWkSquadBowlers = squad.filter(p => TeamMaker.isBowler(p) && p.role !== 'WK' && !p.subType?.startsWith('WK') && !activeBowlers.some(a => a.id === p.id));
+    const poolSource = activeBowlers.length >= 6 ? activeBowlers : [...activeBowlers, ...nonWkSquadBowlers];
     const frontlineBowlers = poolSource.filter(p => TeamMaker.isFrontlineBowler(p));
 
     // 1. PP Pool: Top 3 bowlers (prioritize frontline bowlers)
@@ -800,8 +801,9 @@ export class TeamMaker {
     }
 
     const selected = Array.from(selectedMap.values());
-    const activeBowlers = selected.filter(p => TeamMaker.isBowler(p));
-    const poolSource = activeBowlers.length >= 6 ? activeBowlers : selected;
+    const activeBowlers = selected.filter(p => TeamMaker.isBowler(p) && p.role !== 'WK' && !p.subType?.startsWith('WK'));
+    const nonWkSquadBowlers = squad.filter(p => TeamMaker.isBowler(p) && p.role !== 'WK' && !p.subType?.startsWith('WK') && !activeBowlers.some(a => a.id === p.id));
+    const poolSource = activeBowlers.length >= 6 ? activeBowlers : [...activeBowlers, ...nonWkSquadBowlers];
     const frontlineBowlers = poolSource.filter(p => TeamMaker.isFrontlineBowler(p));
 
     // Powerplay: true swing bowlers
@@ -991,10 +993,11 @@ export class TeamMaker {
     }
 
     const selected = Array.from(selectedMap.values());
-    const activeBowlers = selected.filter(p => TeamMaker.isBowler(p));
+    const activeBowlers = selected.filter(p => TeamMaker.isBowler(p) && p.role !== 'WK' && !p.subType?.startsWith('WK'));
+    const nonWkSquadBowlers = sortedSquad.filter(p => TeamMaker.isBowler(p) && p.role !== 'WK' && !p.subType?.startsWith('WK') && !activeBowlers.some(a => a.id === p.id));
     const poolSource = activeBowlers.length >= 6 
       ? activeBowlers 
-      : [...activeBowlers, ...sortedSquad.filter(p => TeamMaker.isBowler(p) && !activeBowlers.some(a => a.id === p.id))];
+      : [...activeBowlers, ...nonWkSquadBowlers];
 
     // Naive death overs: assigns spinners or part-time batting all-rounders to death overs
     const spinnersOrBatAR = poolSource.filter(p => p.role === 'SPIN' || p.subType === 'BAT_AR');
