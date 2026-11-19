@@ -77,6 +77,8 @@ export interface OverInputState {
 export interface BatterOverScorecard {
   id: string;
   name: string;
+  teamId?: string;
+  teamName?: string;
   runs: number;
   balls: number;
   fours: number;
@@ -91,6 +93,8 @@ export interface BatterOverScorecard {
 export interface BowlerOverFigures {
   id: string;
   name: string;
+  teamId?: string;
+  teamName?: string;
   overs: number;
   maidens: number;
   runsConceded: number;

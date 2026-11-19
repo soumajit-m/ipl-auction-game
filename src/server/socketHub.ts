@@ -2786,15 +2786,20 @@ export class SocketHub {
         if (sA && sB) {
           sA.played++;
           sB.played++;
-          sA.totalRunsScored += result.innings1.totalRuns;
-          sA.totalOversBatted += result.innings1.oversCompleted;
-          sA.totalRunsConceded += result.innings2.totalRuns;
-          sA.totalOversBowled += result.innings2.oversCompleted;
 
-          sB.totalRunsScored += result.innings2.totalRuns;
-          sB.totalOversBatted += result.innings2.oversCompleted;
-          sB.totalRunsConceded += result.innings1.totalRuns;
-          sB.totalOversBowled += result.innings1.oversCompleted;
+          const isTeamABatting1st = result.innings1.teamId === sA.teamId;
+          const innBatA = isTeamABatting1st ? result.innings1 : result.innings2;
+          const innBatB = isTeamABatting1st ? result.innings2 : result.innings1;
+
+          sA.totalRunsScored += innBatA.totalRuns;
+          sA.totalOversBatted += innBatA.oversCompleted;
+          sA.totalRunsConceded += innBatB.totalRuns;
+          sA.totalOversBowled += innBatB.oversCompleted;
+
+          sB.totalRunsScored += innBatB.totalRuns;
+          sB.totalOversBatted += innBatB.oversCompleted;
+          sB.totalRunsConceded += innBatA.totalRuns;
+          sB.totalOversBowled += innBatA.oversCompleted;
 
           const forRateA = sA.totalOversBatted > 0 ? sA.totalRunsScored / sA.totalOversBatted : 0;
           const againstRateA = sA.totalOversBowled > 0 ? sA.totalRunsConceded / sA.totalOversBowled : 0;

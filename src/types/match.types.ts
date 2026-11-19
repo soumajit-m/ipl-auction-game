@@ -28,6 +28,8 @@ export interface Playing11Lineup {
 export interface BatterOverScorecard {
   name: string;
   playerId?: string;
+  teamId?: string;
+  teamName?: string;
   runs: number;
   balls: number;
   fours: number;
@@ -38,8 +40,11 @@ export interface BatterOverScorecard {
 }
 
 export interface BowlerOverFigures {
+  id?: string;
   name: string;
   playerId?: string;
+  teamId?: string;
+  teamName?: string;
   overs: number;
   maidens: number;
   runsConceded: number;

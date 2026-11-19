@@ -351,6 +351,8 @@ export class FullMatchSimulator {
         bowlingFigures[bowlerPlayer.name] = {
           id: bowlerPlayer.id,
           name: bowlerPlayer.name,
+          teamId: bowlingTeam.id,
+          teamName: bowlingTeam.name,
           overs: 0,
           maidens: 0,
           runsConceded: 0,
@@ -464,6 +466,8 @@ export class FullMatchSimulator {
 
     // Ensure strike rates & dismissal texts are clean on batting scorecard
     for (const b of Object.values(battingScorecard)) {
+      b.teamId = battingTeam.id;
+      b.teamName = battingTeam.name;
       if (!b.strikeRate && b.balls > 0) {
         b.strikeRate = Math.round((b.runs / b.balls) * 10000) / 100;
       }
@@ -473,6 +477,8 @@ export class FullMatchSimulator {
     }
     // Ensure economies are clean on bowling figures
     for (const bw of Object.values(bowlingFigures)) {
+      bw.teamId = bowlingTeam.id;
+      bw.teamName = bowlingTeam.name;
       if (!bw.economy && bw.overs > 0) {
         bw.economy = Math.round((bw.runsConceded / bw.overs) * 100) / 100;
       }

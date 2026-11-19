@@ -432,8 +432,8 @@ export class TeamMaker {
 
       // If no domestic bowler available on bench but bowler is required, upgrade the best domestic candidate
       if (!candidate && domBench.length > 0) {
-        candidate = domBench[0];
-        if (isBowlerP && remainingBowlers < 6) {
+        candidate = domBench.find(p => p.role !== 'WK' && !p.subType?.startsWith('WK')) || domBench[0];
+        if (isBowlerP && remainingBowlers < 6 && candidate.role !== 'WK' && !candidate.subType?.startsWith('WK')) {
           candidate.isBowlingCapable = true;
         }
       }
@@ -505,7 +505,7 @@ export class TeamMaker {
       // If bench has no compatible bowler, upgrade the best non-bowler in selected
       if (!swapped) {
         const candidateToUpgrade = [...selected]
-          .filter(p => !TeamMaker.isBowler(p) && p.id !== primaryWk.id)
+          .filter(p => !TeamMaker.isBowler(p) && p.role !== 'WK' && !p.subType?.startsWith('WK') && p.id !== primaryWk.id)
           .sort((a, b) => (b.stats?.bowl || 0) - (a.stats?.bowl || 0))[0];
 
         if (candidateToUpgrade) {

@@ -350,14 +350,37 @@ export default function SeasonHubPage() {
     let totalFours = 0;
     let highestTotal = { score: 0, wkts: 0, team: '', opp: '', matchNum: 0 };
 
+    // Authoritative player-to-franchise resolver: prioritizes active tournament franchise rosters
+    const resolvePlayerTeam = (playerName: string, explicitTeam?: string, matchInningsTeam?: string) => {
+      if (!playerName) return 'Unknown';
+      for (const t of Object.values(teams)) {
+        if (t?.squad?.some(p => p.name === playerName || p.id === playerName)) {
+          return t.name || t.franchiseId || (t as any).id;
+        }
+      }
+      if (explicitTeam && explicitTeam.trim().length > 0 && explicitTeam !== 'Unknown') {
+        return teams[explicitTeam]?.name || explicitTeam;
+      }
+      if (matchInningsTeam && matchInningsTeam.trim().length > 0 && matchInningsTeam !== 'Unknown') {
+        return teams[matchInningsTeam]?.name || matchInningsTeam;
+      }
+      return 'Unknown';
+    };
+
     for (const f of completedFixtures) {
+      const inn1BatTeamName = f.innings1?.teamName || teams[f.innings1?.teamId]?.name || f.innings1?.teamId || '';
+      const inn1BowlTeamName = f.innings2?.teamName || (f.innings1?.teamId === f.homeTeamId ? (teams[f.awayTeamId]?.name || f.awayTeamId) : (teams[f.homeTeamId]?.name || f.homeTeamId)) || '';
+
+      const inn2BatTeamName = f.innings2?.teamName || teams[f.innings2?.teamId]?.name || f.innings2?.teamId || '';
+      const inn2BowlTeamName = f.innings1?.teamName || (f.innings2?.teamId === f.homeTeamId ? (teams[f.awayTeamId]?.name || f.awayTeamId) : (teams[f.homeTeamId]?.name || f.homeTeamId)) || '';
+
       if (f.innings1) {
         if (f.innings1.totalRuns > highestTotal.score) {
           highestTotal = {
             score: f.innings1.totalRuns,
             wkts: f.innings1.totalWickets,
-            team: f.innings1.teamName,
-            opp: f.awayTeam || f.awayTeamId,
+            team: inn1BatTeamName,
+            opp: inn1BowlTeamName,
             matchNum: f.matchNumber
           };
         }
@@ -365,10 +388,11 @@ export default function SeasonHubPage() {
           for (const b of Object.values(f.innings1.battingScorecard) as any[]) {
             totalFours += b.fours || 0;
             totalSixes += b.sixes || 0;
+            const resolvedTeam = resolvePlayerTeam(b.name, b.teamName, inn1BatTeamName);
             if (!batterMap[b.name]) {
               batterMap[b.name] = {
                 name: b.name,
-                teamName: f.innings1.teamName,
+                teamName: resolvedTeam,
                 runs: 0,
                 innings: 0,
                 balls: 0,
@@ -378,6 +402,7 @@ export default function SeasonHubPage() {
               };
             }
             const bm = batterMap[b.name];
+            bm.teamName = resolvedTeam;
             bm.runs += b.runs || 0;
             bm.balls += b.balls || 0;
             bm.fours += b.fours || 0;
@@ -388,10 +413,11 @@ export default function SeasonHubPage() {
         }
         if (f.innings1.bowlingFigures) {
           for (const bw of Object.values(f.innings1.bowlingFigures) as any[]) {
+            const resolvedTeam = resolvePlayerTeam(bw.name, bw.teamName, inn1BowlTeamName);
             if (!bowlerMap[bw.name]) {
               bowlerMap[bw.name] = {
                 name: bw.name,
-                teamName: f.awayTeam || f.awayTeamId,
+                teamName: resolvedTeam,
                 wickets: 0,
                 overs: 0,
                 runsConceded: 0,
@@ -402,6 +428,7 @@ export default function SeasonHubPage() {
               };
             }
             const bwm = bowlerMap[bw.name];
+            bwm.teamName = resolvedTeam;
             bwm.wickets += bw.wickets || 0;
             bwm.overs += bw.overs || 0;
             bwm.runsConceded += bw.runsConceded || 0;
@@ -420,8 +447,8 @@ export default function SeasonHubPage() {
           highestTotal = {
             score: f.innings2.totalRuns,
             wkts: f.innings2.totalWickets,
-            team: f.innings2.teamName,
-            opp: f.homeTeam || f.homeTeamId,
+            team: inn2BatTeamName,
+            opp: inn2BowlTeamName,
             matchNum: f.matchNumber
           };
         }
@@ -429,10 +456,11 @@ export default function SeasonHubPage() {
           for (const b of Object.values(f.innings2.battingScorecard) as any[]) {
             totalFours += b.fours || 0;
             totalSixes += b.sixes || 0;
+            const resolvedTeam = resolvePlayerTeam(b.name, b.teamName, inn2BatTeamName);
             if (!batterMap[b.name]) {
               batterMap[b.name] = {
                 name: b.name,
-                teamName: f.innings2.teamName,
+                teamName: resolvedTeam,
                 runs: 0,
                 innings: 0,
                 balls: 0,
@@ -442,6 +470,7 @@ export default function SeasonHubPage() {
               };
             }
             const bm = batterMap[b.name];
+            bm.teamName = resolvedTeam;
             bm.runs += b.runs || 0;
             bm.balls += b.balls || 0;
             bm.fours += b.fours || 0;
@@ -452,10 +481,11 @@ export default function SeasonHubPage() {
         }
         if (f.innings2.bowlingFigures) {
           for (const bw of Object.values(f.innings2.bowlingFigures) as any[]) {
+            const resolvedTeam = resolvePlayerTeam(bw.name, bw.teamName, inn2BowlTeamName);
             if (!bowlerMap[bw.name]) {
               bowlerMap[bw.name] = {
                 name: bw.name,
-                teamName: f.homeTeam || f.homeTeamId,
+                teamName: resolvedTeam,
                 wickets: 0,
                 overs: 0,
                 runsConceded: 0,
@@ -466,6 +496,7 @@ export default function SeasonHubPage() {
               };
             }
             const bwm = bowlerMap[bw.name];
+            bwm.teamName = resolvedTeam;
             bwm.wickets += bw.wickets || 0;
             bwm.overs += bw.overs || 0;
             bwm.runsConceded += bw.runsConceded || 0;
@@ -481,8 +512,11 @@ export default function SeasonHubPage() {
 
       if (f.playerOfTheMatch?.name) {
         const pName = f.playerOfTheMatch.name;
+        const resolvedTeam = resolvePlayerTeam(pName, f.playerOfTheMatch.team);
         if (!mvpMap[pName]) {
-          mvpMap[pName] = { name: pName, team: f.playerOfTheMatch.team || '', potmCount: 0, points: 0 };
+          mvpMap[pName] = { name: pName, team: resolvedTeam, potmCount: 0, points: 0 };
+        } else {
+          mvpMap[pName].team = resolvedTeam;
         }
         mvpMap[pName].potmCount += 1;
         mvpMap[pName].points += f.playerOfTheMatch.impactPoints || 25;
@@ -553,21 +587,21 @@ export default function SeasonHubPage() {
     if (candidateBowlerIds.length > 0) {
       setPpBowlerIds(prev => {
         const next = prev.filter(id => candidateBowlerIds.includes(id));
-        return next.length === prev.length ? prev : next;
+        return (next.length === prev.length && next.every((id, i) => id === prev[i])) ? prev : next;
       });
       setMidBowlerIds(prev => {
-        const next = prev.filter(id => candidateBowlerIds.includes(id) && (quotaResult.quotas[id]?.usableMiddleOvers ?? 0) > 0);
-        return next.length === prev.length ? prev : next;
+        const next = prev.filter(id => candidateBowlerIds.includes(id));
+        return (next.length === prev.length && next.every((id, i) => id === prev[i])) ? prev : next;
       });
       setDeathBowlerIds(prev => {
         const next = prev.filter(id => candidateBowlerIds.includes(id));
-        return next.length === prev.length ? prev : next;
+        return (next.length === prev.length && next.every((id, i) => id === prev[i])) ? prev : next;
       });
       setFirstBowlerId(prev => (prev && candidateBowlerIds.includes(prev) ? prev : ''));
       setDeathOver17_19BowlerId(prev => (prev && candidateBowlerIds.includes(prev) ? prev : ''));
       setDeathOver18_20BowlerId(prev => (prev && candidateBowlerIds.includes(prev) ? prev : ''));
     }
-  }, [candidateBowlerIds, quotaResult.quotas, midBowlerIds, ppBowlerIds, deathBowlerIds]);
+  }, [candidateBowlerIds]);
 
   const selectedCount = workingXI.length;
   const overseasCount = selectedPlayers.filter(p => p.isOverseas).length;
@@ -679,13 +713,15 @@ export default function SeasonHubPage() {
   };
 
   const toggleMidBowler = (id: string) => {
+    if (!candidateBowlerIds.includes(id)) return;
     if (midBowlerIds.includes(id)) {
       setMidBowlerIds(midBowlerIds.filter(x => x !== id));
     } else {
-      if (midBowlerIds.length >= 5) return;
+      const currentValid = midBowlerIds.filter(x => candidateBowlerIds.includes(x));
+      if (currentValid.length >= 5) return;
       const remaining = quotaResult.quotas[id]?.usableMiddleOvers ?? 0;
       if (remaining === 0) return;
-      setMidBowlerIds([...midBowlerIds, id]);
+      setMidBowlerIds([...currentValid, id]);
     }
   };
 
@@ -791,9 +827,9 @@ export default function SeasonHubPage() {
       wkId: finalWk,
       battingOrder: finalBattingOrder,
       bowlerPool352: {
-        powerplayBowlerIds: ppBowlerIds,
+        powerplayBowlerIds: ppBowlerIds.filter(id => candidateBowlerIds.includes(id)),
         firstBowlerId: firstBowlerId || ppBowlerIds[0] || workingXI[0],
-        middleBowlerIds: midBowlerIds,
+        middleBowlerIds: validMidBowlerIds,
         deathOver17_19BowlerId: slotted17,
         deathOver18_20BowlerId: slotted18,
         deathBowlerIds: [slotted17, slotted18].filter(Boolean),
@@ -2651,10 +2687,10 @@ export default function SeasonHubPage() {
                               <thead className="bg-subpill text-slate-400 text-[11px] border-b border-borderDark">
                                 <tr>
                                   <th className="py-2.5 px-3 w-16 text-center">OVER</th>
-                                  <th className="py-2.5 px-3">{activeInspectedMatch.innings1.teamName} BOWLER</th>
+                                  <th className="py-2.5 px-3">{activeInspectedMatch.innings2.teamName} BOWLER</th>
                                   <th className="py-2.5 px-3 text-center">INN 1 RUNS</th>
                                   <th className="py-2.5 px-3 text-right">INN 1 TOTAL</th>
-                                  <th className="py-2.5 px-3 border-l border-borderDark/60">{activeInspectedMatch.innings2.teamName} BOWLER</th>
+                                  <th className="py-2.5 px-3 border-l border-borderDark/60">{activeInspectedMatch.innings1.teamName} BOWLER</th>
                                   <th className="py-2.5 px-3 text-center">INN 2 RUNS</th>
                                   <th className="py-2.5 px-3 text-right">INN 2 TOTAL</th>
                                 </tr>
