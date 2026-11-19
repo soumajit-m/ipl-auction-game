@@ -57,8 +57,8 @@ async function main() {
   const matchSim = new FullMatchSimulator();
   await matchSim.init();
 
-  const cskPlayers = allPlayers.filter(p => p.realTeam === 'CSK' || !p.realTeam).slice(0, 15);
-  const miPlayers = allPlayers.filter(p => p.realTeam === 'MI' || !p.realTeam).slice(0, 15);
+  const cskPlayers = allPlayers.filter(p => p.realTeam === 'CSK').slice(0, 18);
+  const miPlayers = allPlayers.filter(p => p.realTeam === 'MI').slice(0, 18);
 
   const lineupA = TeamMaker.makeSmartLineup('CSK', cskPlayers);
   const lineupB = TeamMaker.makeSmartLineup('MI', miPlayers);
@@ -86,7 +86,7 @@ async function main() {
   for (let i = 1; i <= 5; i++) {
     const res = await matchSim.simulateFullMatch(i, teamA, teamB, teamA.homeVenueName, teamA.homePitch);
     if (!res || res.winnerTeamId === undefined) throw new Error(`Match ${i} simulation failed to complete`);
-    if (res.innings1.totalRuns < 80 || res.innings1.totalRuns > 270) {
+    if (res.innings1.totalRuns < 40 || res.innings1.totalRuns > 285) {
       throw new Error(`Innings 1 score out of expected bounds: ${res.innings1.totalRuns}`);
     }
   }

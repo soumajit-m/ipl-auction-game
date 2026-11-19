@@ -171,7 +171,7 @@ export function validate352Lineup(
   // Anti-starvation check
   const overlap = powerplayBowlerIds.filter((id: string) => resolvedDeathIds.includes(id));
   if (overlap.length > 1) {
-    errors.push(`Anti-Starvation violation: At most 1 bowler may bowl both Powerplay and Death (found ${overlap.length}).`);
+    errors.push(`Over limit exceeded: At most 1 bowler may bowl both Powerplay and Death overs (found ${overlap.length}).`);
   }
 
   if (middleBowlerIds.length !== 5) {
@@ -183,7 +183,7 @@ export function validate352Lineup(
   for (const midId of middleBowlerIds) {
     if (quotasResult.quotas[midId]?.usableMiddleOvers === 0) {
       const p = xi.find(x => x.id === midId);
-      errors.push(`Bowler ${p?.name || midId} has 0 usable middle overs (exhausted in PP & Death).`);
+      errors.push(`Over allocation: ${p?.name || midId} has reached their 4-over maximum in Powerplay & Death overs.`);
     }
   }
 

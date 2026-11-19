@@ -110,7 +110,7 @@ export default function PostAuctionAnalyticsPage() {
               title="Return to the live auction room"
             >
               <ArrowLeft className="w-4 h-4" />
-              <span>← Back to Auction</span>
+              <span>Back to Auction</span>
             </button>
           ) : (
             <button
@@ -264,13 +264,14 @@ export default function PostAuctionAnalyticsPage() {
             </div>
           </div>
 
-          <div className="pt-4 border-t border-borderMuted text-[11px] text-slate-500 font-mono flex justify-between">
-            <span>O(1) 5-RULE TACTICAL SCOUT</span>
+          <div className="pt-4 border-t border-borderMuted text-[11px] text-slate-500 font-mono flex items-center justify-between">
+            <span>TACTICAL SCOUT REPORT</span>
             <button
               onClick={() => router.push('/season')}
-              className="text-brand-gold hover:underline"
+              className="text-brand-gold hover:underline flex items-center gap-1 font-bold"
             >
-              Configure Playing 11 →
+              <span>Configure Playing 11</span>
+              <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
         </section>

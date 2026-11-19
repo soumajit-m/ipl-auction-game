@@ -641,12 +641,12 @@ export default function SeasonHubPage() {
     if (!deathOver17_19BowlerId || !deathOver18_20BowlerId) blockers.push('Assign both Death Overs slots (Overs 17 & 19 and Overs 18 & 20)');
     else if (deathOver17_19BowlerId === deathOver18_20BowlerId) blockers.push('Overs 17 & 19 and Overs 18 & 20 must be two distinct bowlers');
 
-    if (quotaResult.ppDeathOverlapCount > 1) blockers.push('Anti-Starvation violation: At most 1 bowler can bowl in both Powerplay and Death');
+    if (quotaResult.ppDeathOverlapCount > 1) blockers.push('Over limit exceeded: At most 1 bowler can bowl in both Powerplay and Death overs');
 
     const ghostMids = midBowlerIds.filter(id => !candidateBowlerIds.includes(id));
     if (ghostMids.length > 0) {
       const names = ghostMids.map(id => selectedPlayers.find(p => p.id === id)?.name || id).join(', ');
-      blockers.push(`Middle overs error: ${names} is a wicketkeeper/non-bowler. Please uncheck or click Auto-Fix.`);
+      blockers.push(`Selection notice: ${names} is a non-bowler. Please choose a bowling-capable player or click Auto-Fill.`);
     }
 
     if (validMidBowlerIds.length !== 5) {
@@ -655,7 +655,7 @@ export default function SeasonHubPage() {
       const exhaustedMids = validMidBowlerIds.filter(id => (quotaResult.quotas[id]?.usableMiddleOvers ?? 0) === 0);
       if (exhaustedMids.length > 0) {
         const names = exhaustedMids.map(id => selectedPlayers.find(p => p.id === id)?.name || id).join(', ');
-        blockers.push(`Middle overs error: ${names} has 0 usable middle overs (exhausted by PP & Death). Uncheck them from Middle Overs.`);
+        blockers.push(`Over allocation: ${names} has reached their 4-over maximum in Powerplay & Death. Select another middle-overs bowler.`);
       }
     }
 
@@ -1049,7 +1049,7 @@ export default function SeasonHubPage() {
                           UNTIMED PRE-MATCH PREPARATION
                         </span>
                         <span className="text-brand-emerald font-bold">
-                          ∞ Infinite Prep Time (No Auto-Countdown)
+                          Unlimited Prep Time (No Auto-Countdown)
                         </span>
                       </div>
                       <p className="text-[10px] text-slate-400 mt-1">
@@ -1141,7 +1141,7 @@ export default function SeasonHubPage() {
                               className="w-full py-3 px-6 rounded-xl bg-brand-gold hover:bg-brand-gold/90 text-slate-950 font-mono font-extrabold text-sm transition-all shadow-lg shadow-brand-gold/25 flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50"
                             >
                               <Play className="w-4 h-4 fill-current" />
-                              <span>{isSimulating ? 'SIMULATING...' : `⚡ SIMULATE MATCH #${nextFixture.matchNumber}`}</span>
+                              <span>{isSimulating ? 'SIMULATING...' : `SIMULATE MATCH #${nextFixture.matchNumber}`}</span>
                             </button>
                           ) : (
                             <div className="w-full py-2.5 px-4 rounded-xl bg-subpill/80 border border-borderDark text-center font-mono text-xs text-slate-400 flex items-center justify-center gap-2">
@@ -1201,7 +1201,7 @@ export default function SeasonHubPage() {
                         </div>
                       )}
 
-                      {/* Host God Controls */}
+                      {/* Host Controls */}
                       {isHostEffective && (
                         <div className="w-full pt-3 mt-1 border-t border-borderDark/60 flex flex-col sm:flex-row items-center justify-center gap-3">
                           <button
@@ -1213,10 +1213,10 @@ export default function SeasonHubPage() {
                             }}
                             disabled={isSimulating}
                             className="px-3.5 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 font-mono font-bold text-xs transition-all flex items-center gap-1.5 active:scale-95"
-                            title="Host God Control: Instantly trigger simulation overriding all pending votes"
+                            title="Host Override: Immediately simulate current match"
                           >
                             <Zap className="w-3.5 h-3.5 text-amber-400" />
-                            <span>⚡ Force Simulate Match</span>
+                            <span>Force Simulate Match</span>
                           </button>
 
                           {currentMatchIndex < 70 && (
@@ -1225,10 +1225,10 @@ export default function SeasonHubPage() {
                                 onClick={handleSimulateAll}
                                 disabled={isSimulating}
                                 className="px-3.5 py-1.5 rounded-lg bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/40 text-blue-300 font-mono font-bold text-xs transition-all flex items-center gap-1.5 active:scale-95"
-                                title="Host God Control: Fast-forward remaining regular season matches to Match 70"
+                                title="Host Action: Fast-forward remaining regular season matches to Match 70 (Playoffs)"
                               >
                                 <FastForward className="w-3.5 h-3.5 text-blue-400" />
-                                <span>⏩ Simulate All Till Match 70 (Playoffs)</span>
+                                <span>Fast-Forward to Match 70 (Playoffs)</span>
                               </button>
 
                               {showSimulateAllConfirm && (
@@ -3046,7 +3046,7 @@ export default function SeasonHubPage() {
                               onClick={() => handleBenchPlayer(p.id)}
                               className="px-2.5 py-1 rounded bg-subpill hover:bg-rose-500/20 hover:text-rose-300 border border-borderDark text-[11px] text-slate-300 font-mono transition-colors"
                             >
-                              Bench →
+                              Bench
                             </button>
                           </div>
                         ))
@@ -3091,7 +3091,7 @@ export default function SeasonHubPage() {
                               disabled={selectedCount >= 11 || (p.isOverseas && overseasCount >= 4)}
                               className="px-2.5 py-1 rounded bg-subpill hover:bg-brand-gold/20 hover:text-brand-gold border border-borderDark text-[11px] text-slate-300 font-mono transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                             >
-                              ← Add to XI
+                              Add to XI
                             </button>
                           </div>
                         ))
@@ -3141,7 +3141,7 @@ export default function SeasonHubPage() {
                         <span>STAGE 2: BATTING ORDER & 3-5-2 BOWLING MANAGER</span>
                       </h2>
                       <p className="text-xs text-slate-400 font-mono mt-0.5">
-                        20 Overs Total • Max 4 Overs Per Bowler • 4-2-2 Overlap Quota Enforcement
+                        20 Overs Total • Max 4 Overs Per Bowler • Standard Phase Allocation
                       </p>
                     </div>
                   </div>
@@ -3153,7 +3153,7 @@ export default function SeasonHubPage() {
                       className="px-3.5 py-1.5 rounded-lg bg-canvas hover:bg-subpill border border-borderDark text-slate-300 text-xs font-mono transition-all flex items-center gap-1.5 active:scale-95"
                     >
                       <Zap className="w-3.5 h-3.5 text-brand-gold fill-current" />
-                      <span>⚡ Auto-Configure 3-5-2</span>
+                      <span>Auto-Configure 3-5-2</span>
                     </button>
 
                     <button
@@ -3442,7 +3442,7 @@ export default function SeasonHubPage() {
 
                       {quotaResult.ppDeathOverlapCount > 1 && (
                         <div className="p-2.5 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-300 text-[11px]">
-                          ⚠️ Anti-Starvation Guard: Maximum 1 bowler can bowl both Powerplay and Death.
+                          ⚠️ Over Limit: Maximum 1 bowler can bowl in both Powerplay and Death overs.
                         </div>
                       )}
 
@@ -3617,7 +3617,7 @@ export default function SeasonHubPage() {
                           }}
                           className="px-2.5 py-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 rounded text-[10px] font-bold transition-all"
                         >
-                          ⚡ Auto-Fix Middle Overs Selection
+                          Auto-Fill Middle Overs Selection
                         </button>
                       </div>
                     )}
