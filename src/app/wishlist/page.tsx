@@ -29,7 +29,9 @@ export default function WishlistPage() {
     hostAction,
     isHost,
     skipAuctionDebug,
-    leaveRoom
+    leaveRoom,
+    initSocket,
+    joinOrSyncRoom
   } = useGameRoomStore();
 
   const handleQuitRoom = () => {
@@ -47,10 +49,15 @@ export default function WishlistPage() {
   const [secondsRemaining, setSecondsRemaining] = useState<number>(180);
 
   useEffect(() => {
+    initSocket();
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       if (params.has('debug')) {
         setIsDebugMode(true);
+      }
+      const urlRoom = params.get('room') || params.get('roomCode');
+      if (urlRoom && urlRoom.toUpperCase().trim() !== roomCode) {
+        joinOrSyncRoom(urlRoom.toUpperCase().trim());
       }
     }
   }, []);
@@ -92,9 +99,10 @@ export default function WishlistPage() {
 
   useEffect(() => {
     if (roomState?.status === 'AUCTION') {
-      router.push('/auction');
+      const isDebug = typeof window !== 'undefined' && window.location.search.includes('debug');
+      router.push(`/auction?room=${roomCode || ''}${isDebug ? '&debug=true' : ''}`);
     }
-  }, [roomState?.status, router]);
+  }, [roomState?.status, roomCode, router]);
 
   const toggleTarget = (id: string) => {
     if (hasSubmitted) return;

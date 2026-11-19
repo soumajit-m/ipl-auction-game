@@ -128,19 +128,12 @@ export class SocketHub {
   }
 
   public getRoom(roomCode?: string): InternalRoomState | undefined {
-    if (roomCode) {
-      const clean = roomCode.toUpperCase().trim();
-      let room = this.rooms.get(clean);
-      if (room) return room;
-      room = Array.from(this.rooms.values()).find(rm => rm.roomCode.toUpperCase() === clean);
-      if (room) return room;
-      return undefined;
-    }
-    // Fallback: If no roomCode was provided and only 1 room is loaded in memory
-    if (this.rooms.size === 1) {
-      return Array.from(this.rooms.values())[0];
-    }
-    return undefined;
+    if (!roomCode) return undefined;
+    const clean = roomCode.toUpperCase().trim();
+    let room = this.rooms.get(clean);
+    if (room) return room;
+    room = Array.from(this.rooms.values()).find(rm => rm.roomCode.toUpperCase() === clean);
+    return room || undefined;
   }
 
   public createRoom(
@@ -343,6 +336,11 @@ export class SocketHub {
       }
 
       const cleanCode = room.roomCode.toUpperCase().trim();
+      // Leave any previously joined room so socket doesn't receive cross-room events
+      if (socket.data.roomCode && socket.data.roomCode !== cleanCode) {
+        socket.leave(socket.data.roomCode);
+        socket.leave(socket.data.roomCode.toLowerCase());
+      }
       socket.join(cleanCode);
       socket.join(cleanCode.toLowerCase());
       socket.data.roomCode = cleanCode;
@@ -1159,6 +1157,11 @@ export class SocketHub {
       }
 
       const cleanCode = room.roomCode.toUpperCase().trim();
+      // Leave any previously joined room so socket doesn't receive cross-room events
+      if (socket.data.roomCode && socket.data.roomCode !== cleanCode) {
+        socket.leave(socket.data.roomCode);
+        socket.leave(socket.data.roomCode.toLowerCase());
+      }
       socket.join(cleanCode);
       socket.join(cleanCode.toLowerCase());
       socket.data.roomCode = cleanCode;
@@ -1288,15 +1291,22 @@ export class SocketHub {
 
     socket.on('leave_room', (data?: { roomCode?: string; deviceUUID?: string }) => {
       const code = data?.roomCode || socket.data.roomCode;
-      const room = code ? this.rooms.get(code) : undefined;
-      if (room) {
-        const seat = room.seats.find(s => s.socketId === socket.id || (data?.deviceUUID && s.deviceUUID === data.deviceUUID));
-        if (seat) handleHumanDisconnectOrLeave(room, seat);
-        if (code) {
-          socket.leave(code);
+      if (code) {
+        const clean = code.toUpperCase().trim();
+        const room = this.rooms.get(clean);
+        if (room) {
+          const seat = room.seats.find(s => s.socketId === socket.id || (data?.deviceUUID && s.deviceUUID === data.deviceUUID));
+          if (seat) handleHumanDisconnectOrLeave(room, seat);
+          if (room.hostSocketId === socket.id) {
+            room.hostSocketId = null;
+          }
         }
+        socket.leave(clean);
+        socket.leave(clean.toLowerCase());
       }
       socket.data.roomCode = null;
+      socket.data.isHost = false;
+      socket.data.teamId = null;
     });
   }
 

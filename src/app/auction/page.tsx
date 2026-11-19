@@ -108,7 +108,7 @@ export default function AuctionArenaPage() {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       const urlRoom = params.get('room') || params.get('roomCode');
-      const activeCode = urlRoom || roomState?.roomCode || localStorage.getItem('active_ipl_room_code');
+      const activeCode = urlRoom || roomCode || roomState?.roomCode || localStorage.getItem('active_ipl_room_code');
       if (activeCode) {
         localStorage.setItem('active_ipl_room_code', activeCode);
         joinOrSyncRoom(activeCode);

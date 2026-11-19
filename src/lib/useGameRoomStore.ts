@@ -106,7 +106,8 @@ export const useGameRoomStore = create<GameRoomStore>((set, get) => ({
 
     socket.on('connect', () => {
       set({ connected: true });
-      const activeCode = get().roomCode || (typeof window !== 'undefined' ? localStorage.getItem('active_ipl_room_code') : null);
+      const isHome = typeof window !== 'undefined' && window.location.pathname === '/';
+      const activeCode = get().roomCode || (!isHome && typeof window !== 'undefined' ? localStorage.getItem('active_ipl_room_code') : null);
       if (activeCode) {
         socket.emit('room:join_or_sync', { roomCode: activeCode, deviceUUID });
       }
@@ -171,7 +172,17 @@ export const useGameRoomStore = create<GameRoomStore>((set, get) => ({
     if (!socket) return;
 
     const code = roomCode.toUpperCase().trim();
-    set({ roomCode: code, playerName: playerName || '', isHost: Boolean(isHost) });
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('active_ipl_room_code', code);
+    }
+    set({
+      roomCode: code,
+      playerName: playerName || '',
+      isHost: Boolean(isHost),
+      roomState: null,
+      mySeat: null,
+      claimableSeats: []
+    });
 
     socket.emit('join_room', {
       roomCode: code,

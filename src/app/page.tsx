@@ -98,28 +98,9 @@ export default function EntryLobbyPage() {
   }, [resendCountdown]);
 
   useEffect(() => {
-    const hasStoredActiveRoom = typeof window !== 'undefined' && Boolean(localStorage.getItem('active_ipl_room_code'));
-    if (!hasStoredActiveRoom && !useGameRoomStore.getState().roomCode) {
-      if (roomState) {
-        useGameRoomStore.setState({ roomCode: null, roomState: null, mySeat: null });
-      }
-      return;
-    }
-
-    if (roomState && roomState.roomCode) {
-      if (roomState.status === 'LOBBY') {
-        router.push('/lobby');
-      } else if (roomState.status === 'WISHLIST') {
-        router.push('/wishlist');
-      } else if (roomState.status === 'AUCTION') {
-        router.push('/auction');
-      } else if (roomState.status === 'ANALYTICS') {
-        router.push('/analytics');
-      } else if (roomState.status === 'SEASON') {
-        router.push('/season');
-      }
-    }
-  }, [roomState, router]);
+    // When landing on the home page, clear any active room state from the store so old sessions do not hijack
+    useGameRoomStore.setState({ roomCode: null, roomState: null, mySeat: null });
+  }, []);
 
   const fetchSavedRooms = async (hostId: string, token?: string) => {
     setLoadingRooms(true);
@@ -140,7 +121,9 @@ export default function EntryLobbyPage() {
   const handleGuestJoin = (e: React.FormEvent) => {
     e.preventDefault();
     if (!roomPin.trim() || !guestName.trim()) return;
-    joinRoom(roomPin, guestName, false);
+    const cleanPin = roomPin.toUpperCase().trim();
+    joinRoom(cleanPin, guestName, false);
+    router.push(`/lobby?room=${cleanPin}`);
   };
 
   const handleClaim = (teamId: string) => {
@@ -299,7 +282,9 @@ export default function EntryLobbyPage() {
       });
       const data = await res.json();
       if (data.roomCode) {
-        joinRoom(data.roomCode, hostAuth.name || hostAuth.username, true);
+        const cleanCode = data.roomCode.toUpperCase().trim();
+        joinRoom(cleanCode, hostAuth.name || hostAuth.username, true);
+        router.push(`/lobby?room=${cleanCode}`);
       }
     } catch (e) {
       console.error(e);
@@ -845,7 +830,16 @@ export default function EntryLobbyPage() {
 
                                 <div className="flex items-center gap-1.5">
                                   <button
-                                    onClick={() => joinRoom(r.roomCode, hostAuth.name || hostAuth.username, true)}
+                                    onClick={() => {
+                                      const cleanCode = r.roomCode.toUpperCase().trim();
+                                      joinRoom(cleanCode, hostAuth.name || hostAuth.username, true);
+                                      let target = '/lobby';
+                                      if (r.status === 'SEASON') target = '/season';
+                                      else if (r.status === 'AUCTION') target = '/auction';
+                                      else if (r.status === 'WISHLIST') target = '/wishlist';
+                                      else if (r.status === 'ANALYTICS') target = '/analytics';
+                                      router.push(`${target}?room=${cleanCode}`);
+                                    }}
                                     className="h-7 px-2.5 rounded-lg bg-[#2C3246] hover:bg-white/20 text-slate-200 text-xs transition-colors"
                                   >
                                     Resume

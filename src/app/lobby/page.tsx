@@ -43,10 +43,23 @@ export default function PreGameLobbyPage() {
     claimSeat,
     hostAction,
     connected,
-    leaveRoom
+    leaveRoom,
+    initSocket,
+    joinOrSyncRoom
   } = useGameRoomStore();
 
   const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    initSocket();
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const urlRoom = params.get('room') || params.get('roomCode');
+      if (urlRoom && urlRoom.toUpperCase().trim() !== roomCode) {
+        joinOrSyncRoom(urlRoom.toUpperCase().trim());
+      }
+    }
+  }, []);
 
   const handleQuitRoom = () => {
     if (window.confirm('Quit this lobby and return to home screen?')) {
@@ -57,17 +70,21 @@ export default function PreGameLobbyPage() {
 
   // Watch room phase transitions
   useEffect(() => {
-    if (!roomCode) {
-      router.push('/');
+    if (!roomCode && typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const urlRoom = params.get('room') || params.get('roomCode') || localStorage.getItem('active_ipl_room_code');
+      if (!urlRoom) {
+        router.push('/');
+      }
       return;
     }
 
     if (roomState?.status === 'WISHLIST') {
-      router.push('/wishlist');
+      router.push(`/wishlist${roomCode ? `?room=${roomCode}` : ''}`);
     } else if (roomState?.status === 'AUCTION') {
-      router.push('/auction');
+      router.push(`/auction${roomCode ? `?room=${roomCode}` : ''}`);
     } else if (roomState?.status === 'SEASON') {
-      router.push('/season');
+      router.push(`/season${roomCode ? `?room=${roomCode}` : ''}`);
     }
   }, [roomState?.status, roomCode, router]);
 
