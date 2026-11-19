@@ -80,6 +80,20 @@ function getSavedHostAuth(): HostAuth | null {
   return null;
 }
 
+function formatAuctionError(msg: string): string {
+  if (!msg) return msg;
+  if (msg.includes('SOLVENCY_RISK') || msg.includes('solvency') || msg.includes('Reserved')) {
+    return 'Purse reserved: You must save budget to complete an 18-player squad.';
+  }
+  if (msg.includes('ROLE_SATURATED')) {
+    return 'Squad full for this role.';
+  }
+  if (msg.includes('SOCKET_TIMEOUT')) {
+    return 'Reconnecting to auction room...';
+  }
+  return msg;
+}
+
 export const useGameRoomStore = create<GameRoomStore>((set, get) => ({
   socket: null,
   connected: false,
@@ -132,11 +146,11 @@ export const useGameRoomStore = create<GameRoomStore>((set, get) => ({
     });
 
     socket.on('error_message', (data: { message: string }) => {
-      set({ errorMessage: data.message });
+      set({ errorMessage: formatAuctionError(data.message) });
     });
 
     socket.on('bid_rejected', (data: { reason: string }) => {
-      set({ errorMessage: data.reason });
+      set({ errorMessage: formatAuctionError(data.reason) });
     });
 
     socket.on('save_status', (data: { success: boolean; timestamp: number; message?: string }) => {

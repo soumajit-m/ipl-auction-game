@@ -770,7 +770,7 @@ export default function EntryLobbyPage() {
                               className="w-full accent-brand-gold cursor-pointer"
                             />
                             <div className="flex justify-between text-[9px] text-slate-500 mt-0.5">
-                              <span>60 (Full Pool ~240+)</span>
+                              <span>60 (Full Pool ~560+ players)</span>
                               <span>68 (Balanced Tier)</span>
                               <span>75 (Galácticos Only)</span>
                             </div>

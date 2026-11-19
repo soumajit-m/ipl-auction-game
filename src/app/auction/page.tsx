@@ -30,6 +30,28 @@ import {
 } from 'lucide-react';
 import { getNextBidIncrement as getDynamicBidIncrement, getHumanMinPurseReserve } from '@/types/auction.types';
 
+function getPlayerTierBadge(ovr: number) {
+  if (ovr >= 85) {
+    return {
+      label: 'Elite / Match Winner',
+      shortLabel: 'Elite',
+      badgeClass: 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+    };
+  }
+  if (ovr >= 75) {
+    return {
+      label: 'Quality Starter',
+      shortLabel: 'Starter',
+      badgeClass: 'bg-sky-500/20 text-sky-300 border border-sky-500/30'
+    };
+  }
+  return {
+    label: 'Developing Depth',
+    shortLabel: 'Depth',
+    badgeClass: 'bg-slate-800 text-slate-400 border border-borderDark'
+  };
+}
+
 export default function AuctionArenaPage() {
   const router = useRouter();
   const {
@@ -51,7 +73,8 @@ export default function AuctionArenaPage() {
     skipAuctionDebug,
     voteSkipAuction,
     voteSkipSet,
-    leaveRoom
+    leaveRoom,
+    connected
   } = useGameRoomStore();
 
   const handleQuitRoom = () => {
@@ -600,7 +623,7 @@ export default function AuctionArenaPage() {
               }`}
               title="Toggle 5x Turbo Auction Speed"
             >
-              <span>⚡ 5x Speed</span>
+              <span>5x Turbo Speed</span>
             </button>
 
             <button
@@ -661,6 +684,16 @@ export default function AuctionArenaPage() {
           <div className="flex items-center gap-2">
             <span className="text-base">📋</span>
             <span className="font-bold">{roomState.lastSetSummary}</span>
+          </div>
+        </div>
+      )}
+
+      {/* Reconnecting banner if disconnected */}
+      {!connected && (
+        <div className="bg-amber-500/20 border-b border-amber-500/40 px-6 py-2 flex items-center justify-between text-xs text-amber-200 font-mono animate-fadeIn">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
+            <span>Reconnecting to auction room...</span>
           </div>
         </div>
       )}
@@ -860,10 +893,18 @@ export default function AuctionArenaPage() {
                     ROW 2: Immediate Core Ratings & Style Strip (Directly Below Name) (FIX 4)
                    ------------------------------------------------------------- */}
                 <div className="p-2.5 rounded-lg bg-canvas border border-borderDark flex items-center justify-between gap-2 flex-wrap">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <span className="px-2.5 py-1 rounded bg-brand-gold text-slate-950 font-mono font-black text-xs tabular-nums">
                       OVR {currentLot.player.stats.ovr}
                     </span>
+                    {(() => {
+                      const tier = getPlayerTierBadge(currentLot.player.stats.ovr);
+                      return (
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${tier.badgeClass}`}>
+                          {tier.label}
+                        </span>
+                      );
+                    })()}
                     <span className="px-2 py-1 rounded bg-subpill border border-borderDark font-mono text-xs text-slate-200 tabular-nums">
                       BAT {currentLot.player.stats.bat}
                     </span>
@@ -1370,7 +1411,7 @@ export default function AuctionArenaPage() {
                     className="bg-brand-gold/20 hover:bg-brand-gold/30 text-brand-gold border border-brand-gold/40 text-[9px] font-mono px-2 py-0.5 rounded transition-all flex items-center gap-1"
                     title="Take over this franchise and play live"
                   >
-                    <span>⚡ Take Control</span>
+                    <span>Take Control</span>
                   </button>
                 )}
               </div>
@@ -1700,6 +1741,16 @@ export default function AuctionArenaPage() {
                             <span className={`inline-block px-2 py-0.5 rounded text-xs ${ovrColor}`}>
                               {ovr}
                             </span>
+                            <div className="text-[9px] mt-0.5">
+                              {(() => {
+                                const tier = getPlayerTierBadge(ovr);
+                                return (
+                                  <span className={`px-1 py-0.2 rounded text-[9px] font-semibold ${tier.badgeClass}`}>
+                                    {tier.shortLabel}
+                                  </span>
+                                );
+                              })()}
+                            </div>
                           </td>
 
                           {/* Attributes */}

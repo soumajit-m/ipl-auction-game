@@ -26,7 +26,7 @@ const FRANCHISE_METADATA: Record<string, { name: string; city: string; primaryCo
   RR: { name: 'Rajasthan Royals', city: 'Jaipur', primaryColor: 'from-pink-600/20 to-rose-900/10', accentColor: 'border-pink-500/40 text-pink-400' },
   DC: { name: 'Delhi Capitals', city: 'Delhi', primaryColor: 'from-sky-600/20 to-blue-900/10', accentColor: 'border-sky-500/40 text-sky-400' },
   PBKS: { name: 'Punjab Kings', city: 'Mohali', primaryColor: 'from-rose-600/20 to-red-800/10', accentColor: 'border-rose-500/40 text-rose-400' },
-  LSG: { name: 'Luckwood Super Giants', city: 'Lucknow', primaryColor: 'from-cyan-600/20 to-teal-900/10', accentColor: 'border-cyan-500/40 text-cyan-400' },
+  LSG: { name: 'Lucknow Super Giants', city: 'Lucknow', primaryColor: 'from-cyan-600/20 to-teal-900/10', accentColor: 'border-cyan-500/40 text-cyan-400' },
   GT: { name: 'Gujarat Titans', city: 'Ahmedabad', primaryColor: 'from-slate-700/30 to-blue-950/20', accentColor: 'border-slate-400/40 text-slate-300' }
 };
 

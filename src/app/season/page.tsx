@@ -738,7 +738,7 @@ export default function SeasonHubPage() {
       const smart = TeamMaker.makeSmartLineup(selectedTeamId, currentSquad);
       syncLineupStates(smart);
       updateLineup(smart);
-      setSaveSuccessMsg(`⚡ Smart 11 generated for ${currentTeam?.name || selectedTeamId}!`);
+      setSaveSuccessMsg(`Smart 11 generated for ${currentTeam?.name || selectedTeamId}!`);
       setTimeout(() => setSaveSuccessMsg(null), 3000);
     } catch (e: any) {
       console.warn(e);
@@ -757,7 +757,7 @@ export default function SeasonHubPage() {
       const naive = TeamMaker.makeNaiveLineup(selectedTeamId, currentSquad);
       syncLineupStates(naive);
       updateLineup(naive);
-      setSaveSuccessMsg(`⚡ Auto-Picked Best 11 (Top Ratings) for ${currentTeam?.name || selectedTeamId}! Lineup saved.`);
+      setSaveSuccessMsg(`Auto-Picked Best 11 (Top Ratings) for ${currentTeam?.name || selectedTeamId}! Lineup saved.`);
       setTimeout(() => setSaveSuccessMsg(null), 3000);
     } catch (e: any) {
       console.error('Error generating naive lineup:', e);
@@ -1030,7 +1030,7 @@ export default function SeasonHubPage() {
                             className="px-2 py-0.5 rounded bg-brand-gold hover:bg-brand-gold/90 text-slate-950 font-bold text-[10px] transition-all"
                             title="Skip review countdown and advance to next match"
                           >
-                            Skip ⏩
+                            Skip Countdown
                           </button>
                         </div>
                       </div>
@@ -1739,7 +1739,7 @@ export default function SeasonHubPage() {
                         {matchTopPerformers.inn1.topBowler ? (
                           <div>
                             <div className="flex items-center gap-1.5 font-bold text-slate-100 text-sm">
-                              <span>⚡ {matchTopPerformers.inn1.topBowler.name}</span>
+                              <span>{matchTopPerformers.inn1.topBowler.name}</span>
                             </div>
                             <div className="flex items-baseline gap-2 mt-1">
                               <span className="text-xl font-extrabold font-mono text-purple-400">
@@ -1802,7 +1802,7 @@ export default function SeasonHubPage() {
                         {matchTopPerformers.inn2.topBowler ? (
                           <div>
                             <div className="flex items-center gap-1.5 font-bold text-slate-100 text-sm">
-                              <span>⚡ {matchTopPerformers.inn2.topBowler.name}</span>
+                              <span>{matchTopPerformers.inn2.topBowler.name}</span>
                             </div>
                             <div className="flex items-baseline gap-2 mt-1">
                               <span className="text-xl font-extrabold font-mono text-purple-400">
@@ -1868,7 +1868,7 @@ export default function SeasonHubPage() {
                               : 'text-slate-400 hover:text-slate-200'
                           }`}
                         >
-                          {gm === 'WORM' ? '📈 Worm Chart' : gm === 'MANHATTAN' ? '📊 Manhattan Chart' : '⚡ Phase Comparison'}
+                          {gm === 'WORM' ? 'Worm Chart' : gm === 'MANHATTAN' ? 'Manhattan Chart' : 'Phase Comparison'}
                         </button>
                       ))}
                     </div>
@@ -2960,7 +2960,7 @@ export default function SeasonHubPage() {
                         title="Naive Auto-Picker: Instantly selects the top-rated legal 11 by OVR rating"
                       >
                         <Zap className="w-3.5 h-3.5 fill-current" />
-                        <span>⚡ Auto-Pick Team (Top Ratings)</span>
+                        <span>Auto-Pick Team (Top Ratings)</span>
                       </button>
                     ) : (
                       <button
@@ -2970,7 +2970,7 @@ export default function SeasonHubPage() {
                         title="Smart AI Lineup: 3-5-2 Phase balance with death specialists and tactical synergy"
                       >
                         <Sparkles className="w-3.5 h-3.5" />
-                        <span>⚡ Auto-Pick Smart 11 (AI)</span>
+                        <span>Auto-Pick Smart 11 (AI)</span>
                       </button>
                     )}
 
@@ -3024,7 +3024,7 @@ export default function SeasonHubPage() {
                       {selectedPlayers.length === 0 ? (
                         <div className="p-8 text-center text-xs font-mono text-slate-500">
                           No players selected in Starting 11.<br />
-                          Click <strong>[⚡ Auto-Pick Team (Top Ratings)]</strong> above or add from the bench.
+                          Click <strong>[Auto-Pick Team (Top Ratings)]</strong> above or add from the bench.
                         </div>
                       ) : (
                         selectedPlayers.map((p, idx) => (
