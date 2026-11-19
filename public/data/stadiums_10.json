@@ -1,0 +1,92 @@
+[
+  {
+    "id": "stadium_chepauk",
+    "franchiseId": "CSK",
+    "franchiseName": "Chennai Super Kings",
+    "name": "M. A. Chidambaram Stadium (Chepauk)",
+    "city": "Chennai",
+    "capacity": 38000,
+    "pitch": { "spin": 0.85, "pace": -0.20, "power": -0.35, "dew": 0.65 }
+  },
+  {
+    "id": "stadium_wankhede",
+    "franchiseId": "MI",
+    "franchiseName": "Mumbai Indians",
+    "name": "Wankhede Stadium",
+    "city": "Mumbai",
+    "capacity": 33108,
+    "pitch": { "spin": -0.25, "pace": 0.75, "power": 0.70, "dew": 0.80 }
+  },
+  {
+    "id": "stadium_eden_gardens",
+    "franchiseId": "KKR",
+    "franchiseName": "Kolkata Knight Riders",
+    "name": "Eden Gardens",
+    "city": "Kolkata",
+    "capacity": 68000,
+    "pitch": { "spin": 0.65, "pace": 0.20, "power": 0.50, "dew": 0.70 }
+  },
+  {
+    "id": "stadium_chinnaswamy",
+    "franchiseId": "RCB",
+    "franchiseName": "Royal Challengers Bengaluru",
+    "name": "M. Chinnaswamy Stadium",
+    "city": "Bengaluru",
+    "capacity": 40000,
+    "pitch": { "spin": -0.30, "pace": 0.40, "power": 0.95, "dew": 0.40 }
+  },
+  {
+    "id": "stadium_sawai_mansingh",
+    "franchiseId": "RR",
+    "franchiseName": "Rajasthan Royals",
+    "name": "Sawai Mansingh Stadium",
+    "city": "Jaipur",
+    "capacity": 30000,
+    "pitch": { "spin": 0.50, "pace": 0.30, "power": -0.20, "dew": 0.30 }
+  },
+  {
+    "id": "stadium_rajiv_gandhi",
+    "franchiseId": "SRH",
+    "franchiseName": "Sunrisers Hyderabad",
+    "name": "Rajiv Gandhi Intl Stadium",
+    "city": "Hyderabad",
+    "capacity": 55000,
+    "pitch": { "spin": 0.10, "pace": 0.50, "power": 0.80, "dew": 0.45 }
+  },
+  {
+    "id": "stadium_arun_jaitley",
+    "franchiseId": "DC",
+    "franchiseName": "Delhi Capitals",
+    "name": "Arun Jaitley Stadium",
+    "city": "Delhi",
+    "capacity": 41842,
+    "pitch": { "spin": 0.55, "pace": 0.10, "power": 0.60, "dew": 0.50 }
+  },
+  {
+    "id": "stadium_mullanpur",
+    "franchiseId": "PBKS",
+    "franchiseName": "Punjab Kings",
+    "name": "Maharaja Yadavindra Singh Stadium, Mullanpur",
+    "city": "Mullanpur, Mohali",
+    "capacity": 38000,
+    "pitch": { "spin": 0.20, "pace": 0.65, "power": 0.40, "dew": 0.60 }
+  },
+  {
+    "id": "stadium_narendra_modi",
+    "franchiseId": "GT",
+    "franchiseName": "Gujarat Titans",
+    "name": "Narendra Modi Stadium",
+    "city": "Ahmedabad",
+    "capacity": 132000,
+    "pitch": { "spin": 0.40, "pace": 0.60, "power": -0.10, "dew": 0.50 }
+  },
+  {
+    "id": "stadium_ekana",
+    "franchiseId": "LSG",
+    "franchiseName": "Lucknow Super Giants",
+    "name": "BRSABV Ekana Cricket Stadium",
+    "city": "Lucknow",
+    "capacity": 50100,
+    "pitch": { "spin": 0.70, "pace": 0.30, "power": -0.20, "dew": 0.45 }
+  }
+]

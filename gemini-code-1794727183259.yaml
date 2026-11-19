@@ -1,0 +1,92 @@
+# IPL_AUCTION_AND_MANAGER_TECH_STACK_SPEC
+# ARCHITECTURE: Unified Next.js Custom Server Monorepo (Stateful RAM + Socket.io + App Router + ONNX)
+# TARGET TIMELINE: 48-Hour Rapid Build via Antigravity
+
+CORE_RUNTIME_AND_FRAMEWORK:
+  framework: Next.js (v14/v15 App Router) with TypeScript (Strict Mode)
+  runtime_execution: Custom Node.js HTTP Server (`server.ts` via `tsx`) wrapping Next.js request handler + Socket.io Server
+  why_custom_server:
+    - Holds authoritative `Map<roomCode, RoomState>` directly in Node.js RAM for <0.2ms O(1) V1.7 auction evaluation[cite: 1]
+    - Runs persistent server-side `setInterval` loops for the 5.0s lot clock[cite: 1], 3-minute wishlist timer, and 7-second debounced MongoDB auto-save
+    - Pre-loads `match_over_net.onnx` and `auction_bid_net.onnx` once into RAM at startup via `onnxruntime-node` (zero cold-start latency)
+
+FRONTEND_BENTO_UI_STACK:
+  ui_library: React 18/19 (Next.js Client Components for Socket views, Server Components for initial shell)
+  styling: Tailwind CSS (configured strictly for Dark-Mode Bento Grid tokens, `100vh` locked auction layout, zero neumorphism)
+  component_primitives:
+    - Lucide-React (crisp icons for Overseas airplane badge, priority stars, pause/save status)
+    - Recharts or Visx (Post-Auction Squad Radar/Bar comparison graphs and Manhattan/Worm over charts)
+  client_state_management:
+    - Zustand: Single lightweight store (`useGameRoomStore`) synced 1-to-1 with incoming sanitized Socket.io broadcasts
+    - TanStack Table (v8): Powers the 314-player Data Explorer and Screen 2 Pre-Auction Wishlist table with instant multi-column sorting and filtering
+  client_storage:
+    - `localStorage`: Persists auto-generated `deviceUUID`, guest `displayName`, and last active `roomCode` for instant seat reclamation
+
+BACKEND_AND_REALTIME_ENGINE:
+  websocket_layer:
+    library: Socket.io (`socket.io` on server, `socket.io-client` on Next.js frontend)
+    namespace_isolation: Room-scoped channels (`io.to(roomCode).emit(...)`) so multiple concurrent rooms never block or leak into each other
+    concurrency_control: Optimistic concurrency locking on bid events (`{ lotId, expectedPrice, bidAmount }`)[cite: 1]
+    dto_sanitization: Outbound middleware (`sanitizeRoomDTO`) that strips AI DNA vectors, `P_acc_vault`, private AI ticks, `M_value`, `M_tax_eff`, and Mode A provisional winners before broadcast[cite: 1]
+
+  nextjs_app_router_http_apis (`src/app/api/*`):
+    - `POST /api/auth/host`: Host login/registration (issues JWT cookie/token to own MongoDB room saves)
+    - `GET  /api/rooms/host-history`: Fetches list of Host's saved/recoverable rooms from MongoDB for Screen 1
+    - `POST /api/rooms/create`: Initializes a new Room in RAM + creates initial MongoDB document
+    - `POST /api/rooms/force-save`: Host manual override endpoint to flush active RAM state to MongoDB immediately
+    - `GET  /api/players`: Serves `players_active.json` (314 real players, 2024–2026) and stadium vectors with caching
+
+DATABASE_AND_PERSISTENCE:
+  database: MongoDB (MongoDB Atlas or local instance)
+  odm: Mongoose (with singleton connection helper `src/lib/mongodb.ts` to prevent connection leaks during Next.js HMR)
+  collections:
+    1_Hosts: `{ _id, email, name, passwordHash, createdAt }`
+    2_GameRooms:
+      - Indexes: `{ roomCode: 1 }` (unique), `{ hostId: 1, updatedAt: -1 }`
+      - Fields: `{ roomCode, hostId, status, phase, determinismRatio, seats[], auctionState, matchSchedule[], seasonStats, updatedAt }`
+  persistence_loop:
+    - Dirty-flag check every `7000ms` in `server.ts`: executes atomic `GameRoom.updateOne({ roomCode }, { $set: serializedState }, { upsert: true })` only when `room.isDirty === true`
+    - Immediate flush on Host `[Force Save]` click, phase transitions (Wishlist -> Auction -> Season), and human socket disconnect auto-pause
+
+AI_AND_ML_INFERENCE_STACK:
+  offline_training_pipeline (`/scripts` — Python 3.10+):
+    libraries: `torch`, `onnx`, `onnxruntime`, `pandas`, `numpy`
+    scripts:
+      - `scripts/generate_players_dataset.py` -> outputs `public/data/players_active.json`
+      - `scripts/train_match_over_model.py` -> outputs `public/models/match_over_net.onnx` (36 features -> `[mu_runs, sigma_runs, logit_wicket]`)
+      - `scripts/train_auction_bid_model.py` -> outputs `public/models/auction_bid_net.onnx` (16 features -> `[mu_val, q15_floor, q85_ceil]`)[cite: 1]
+  online_nodejs_inference (`src/server/ml/*` — TypeScript):
+    library: `onnxruntime-node` (C++ native bindings inside Node.js)
+    execution_pattern:
+      - Singleton `InferenceSession` initialized at server boot
+      - Float32Array tensor packing for zero-allocation $<1\text{ms}$ inference during auction lots (`1_V_base`)[cite: 1] and 20-over match batch loops
+      - Built-in analytical math fallback if `.onnx` binary is missing during dev testing
+
+MONOREPO_DIRECTORY_STRUCTURE:
+  root:
+    - `server.ts`: Custom Node.js entry point (boots Next.js + attaches Socket.io + starts 7s MongoDB auto-saver)
+    - `public/data/`: `players_active.json`, `players_200.json`, `stadiums_10.json`
+    - `public/models/`: `match_over_net.onnx`, `auction_bid_net.onnx`
+    - `scripts/`: Python dataset builders, PyTorch `.onnx` trainers, and TypeScript CLI simulation runners
+    - `src/types/`: Shared TypeScript interfaces (`player.types.ts`, `auction.types.ts`, `match.types.ts`, `ui.types.ts`)
+    - `src/lib/`: `mongodb.ts` (Mongoose models), `prng.ts` (seeded `mulberry32`), `weakPointScout.ts` (O(1) rival tips)
+    - `src/server/`:
+        - `socketHub.ts`: Socket.io event handlers, guest `team-name-ip-deviceUUID` binding, and disconnect auto-pause
+        - `auction/bidderAI.ts`: V1.7 Auction AI engine + O(1) `Unticked_Role_Heap`[cite: 1]
+        - `match/simEngine.ts`: 36-feature `MatchOverNet` runner + 45% determinism anchor + 60/40 Scorecard Splitter
+        - `match/teamMaker.ts`: Naive Auto-Team Maker + Smart AI Team Maker (`3-5-2` & `4-2-2` overlap resolver)
+    - `src/app/`:
+        - `page.tsx`: Screen 1 (Fast Entry, Guest Join & Host MongoDB Recovery)
+        - `wishlist/page.tsx`: Screen 2 (3-Minute Priority Tick Table)
+        - `auction/page.tsx`: Screen 3 (Single-Screen 100vh Dark Bento Auction Arena)
+        - `analytics/page.tsx`: Screen 4 (Post-Auction Radar Graphs & Rival Weak-Point Tips)
+        - `season/page.tsx`: Screen 5 (Season Hub, Two-Box Team Manager, Live Scorecard & Leaderboards)
+        - `data-explorer/page.tsx`: R&D Tabular Player & Model Visualizer
+        - `api/`: Next.js Route Handlers (`auth`, `rooms`, `players`)
+
+DEV_AND_BUILD_SCRIPTS (`package.json`):
+  - `dev`: `tsx watch server.ts` (Hot-reloads both Next.js UI and Socket.io backend)
+  - `build:data`: `python scripts/generate_players_dataset.py`
+  - `build:models`: `python scripts/train_match_over_model.py && python scripts/train_auction_bid_model.py`
+  - `build`: `next build`
+  - `start`: `NODE_ENV=production tsx server.ts`

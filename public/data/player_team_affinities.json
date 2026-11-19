@@ -1,0 +1,1562 @@
+{
+  "p_001": {
+    "name": "Abhishek Sharma",
+    "franchise": "SRH",
+    "isFranchiseIcon": true
+  },
+  "p_002": {
+    "name": "Jasprit Bumrah",
+    "franchise": "MI",
+    "isFranchiseIcon": true
+  },
+  "p_003": {
+    "name": "V Suryavanshi",
+    "franchise": "RR",
+    "isFranchiseIcon": false
+  },
+  "p_004": {
+    "name": "FH Allen",
+    "franchise": "KKR",
+    "isFranchiseIcon": false
+  },
+  "p_005": {
+    "name": "Virat Kohli",
+    "franchise": "RCB",
+    "isFranchiseIcon": true
+  },
+  "p_006": {
+    "name": "Shreyas Iyer",
+    "franchise": "PBKS",
+    "isFranchiseIcon": false
+  },
+  "p_007": {
+    "name": "Shashank Singh",
+    "franchise": "PBKS",
+    "isFranchiseIcon": true
+  },
+  "p_008": {
+    "name": "B Sai Sudharsan",
+    "franchise": "GT",
+    "isFranchiseIcon": true
+  },
+  "p_009": {
+    "name": "Travis Head",
+    "franchise": "SRH",
+    "isFranchiseIcon": true
+  },
+  "p_010": {
+    "name": "Shubman Gill",
+    "franchise": "GT",
+    "isFranchiseIcon": true
+  },
+  "p_011": {
+    "name": "Tim David",
+    "franchise": "RCB",
+    "isFranchiseIcon": false
+  },
+  "p_012": {
+    "name": "SA Yadav",
+    "franchise": "MI",
+    "isFranchiseIcon": true
+  },
+  "p_013": {
+    "name": "Philip Salt",
+    "franchise": "RCB",
+    "isFranchiseIcon": false
+  },
+  "p_014": {
+    "name": "Mitchell Marsh",
+    "franchise": "LSG",
+    "isFranchiseIcon": false
+  },
+  "p_015": {
+    "name": "C Connolly",
+    "franchise": "PBKS",
+    "isFranchiseIcon": false
+  },
+  "p_016": {
+    "name": "A Mhatre",
+    "franchise": "CSK",
+    "isFranchiseIcon": false
+  },
+  "p_017": {
+    "name": "Bhuvneshwar Kumar",
+    "franchise": "SRH",
+    "isFranchiseIcon": false
+  },
+  "p_018": {
+    "name": "Rajat Patidar",
+    "franchise": "RCB",
+    "isFranchiseIcon": true
+  },
+  "p_019": {
+    "name": "Noor Ahmad",
+    "franchise": "CSK",
+    "isFranchiseIcon": false
+  },
+  "p_020": {
+    "name": "V Chakravarthy",
+    "franchise": "KKR",
+    "isFranchiseIcon": false
+  },
+  "p_021": {
+    "name": "Priyansh Arya",
+    "franchise": "PBKS",
+    "isFranchiseIcon": false
+  },
+  "p_022": {
+    "name": "M Prasidh Krishna",
+    "franchise": "GT",
+    "isFranchiseIcon": false
+  },
+  "p_023": {
+    "name": "Ryan Rickelton",
+    "franchise": "MI",
+    "isFranchiseIcon": false
+  },
+  "p_024": {
+    "name": "Josh Hazlewood",
+    "franchise": "RCB",
+    "isFranchiseIcon": false
+  },
+  "p_025": {
+    "name": "E Malinga",
+    "franchise": "SRH",
+    "isFranchiseIcon": false
+  },
+  "p_026": {
+    "name": "Dinesh Karthik",
+    "franchise": "RCB",
+    "isFranchiseIcon": false
+  },
+  "p_027": {
+    "name": "Jason Holder",
+    "franchise": "GT",
+    "isFranchiseIcon": false
+  },
+  "p_028": {
+    "name": "Sunil Narine",
+    "franchise": "KKR",
+    "isFranchiseIcon": true
+  },
+  "p_029": {
+    "name": "Kuldeep Singh Yadav",
+    "franchise": "DC",
+    "isFranchiseIcon": false
+  },
+  "p_030": {
+    "name": "Venkatesh Iyer",
+    "franchise": "KKR",
+    "isFranchiseIcon": false
+  },
+  "p_031": {
+    "name": "R Sai Kishore",
+    "franchise": "GT",
+    "isFranchiseIcon": false
+  },
+  "p_032": {
+    "name": "Heinrich Klaasen",
+    "franchise": "SRH",
+    "isFranchiseIcon": true
+  },
+  "p_033": {
+    "name": "K H Pandya",
+    "franchise": "RCB",
+    "isFranchiseIcon": false
+  },
+  "p_034": {
+    "name": "Nicholas Pooran",
+    "franchise": "LSG",
+    "isFranchiseIcon": true
+  },
+  "p_035": {
+    "name": "M Pathirana",
+    "franchise": "CSK",
+    "isFranchiseIcon": false
+  },
+  "p_036": {
+    "name": "Josh Inglis",
+    "franchise": "PBKS",
+    "isFranchiseIcon": false
+  },
+  "p_037": {
+    "name": "Arshdeep Singh",
+    "franchise": "PBKS",
+    "isFranchiseIcon": true
+  },
+  "p_038": {
+    "name": "Trent Boult",
+    "franchise": "MI",
+    "isFranchiseIcon": false
+  },
+  "p_039": {
+    "name": "Kagiso Rabada",
+    "franchise": "GT",
+    "isFranchiseIcon": false
+  },
+  "p_040": {
+    "name": "Harshit Rana",
+    "franchise": "KKR",
+    "isFranchiseIcon": false
+  },
+  "p_041": {
+    "name": "Mustafizur Rahman",
+    "franchise": "DC",
+    "isFranchiseIcon": false
+  },
+  "p_042": {
+    "name": "Corbin Bosch",
+    "franchise": "MI",
+    "isFranchiseIcon": false
+  },
+  "p_043": {
+    "name": "Yuzvendra Chahal",
+    "franchise": "PBKS",
+    "isFranchiseIcon": false
+  },
+  "p_044": {
+    "name": "Tristan Stubbs",
+    "franchise": "DC",
+    "isFranchiseIcon": true
+  },
+  "p_045": {
+    "name": "Jos Buttler",
+    "franchise": "GT",
+    "isFranchiseIcon": false
+  },
+  "p_046": {
+    "name": "K L Rahul",
+    "franchise": "LSG",
+    "isFranchiseIcon": true
+  },
+  "p_047": {
+    "name": "Sanju Samson",
+    "franchise": "RR",
+    "isFranchiseIcon": true
+  },
+  "p_048": {
+    "name": "H V Patel",
+    "franchise": "RCB",
+    "isFranchiseIcon": false
+  },
+  "p_049": {
+    "name": "Mitchell Starc",
+    "franchise": "KKR",
+    "isFranchiseIcon": true
+  },
+  "p_050": {
+    "name": "Jofra Archer",
+    "franchise": "RR",
+    "isFranchiseIcon": false
+  },
+  "p_051": {
+    "name": "Mohammed Siraj",
+    "franchise": "RCB",
+    "isFranchiseIcon": true
+  },
+  "p_052": {
+    "name": "Riyan Parag",
+    "franchise": "RR",
+    "isFranchiseIcon": true
+  },
+  "p_053": {
+    "name": "Ashutosh Sharma",
+    "franchise": "DC",
+    "isFranchiseIcon": false
+  },
+  "p_054": {
+    "name": "Andre Russell",
+    "franchise": "KKR",
+    "isFranchiseIcon": true
+  },
+  "p_055": {
+    "name": "Jake Fraser-McGurk",
+    "franchise": "DC",
+    "isFranchiseIcon": true
+  },
+  "p_056": {
+    "name": "Lungi Ngidi",
+    "franchise": "DC",
+    "isFranchiseIcon": false
+  },
+  "p_057": {
+    "name": "Prabhsimran Singh",
+    "franchise": "PBKS",
+    "isFranchiseIcon": true
+  },
+  "p_058": {
+    "name": "Yashasvi Bhupendra Jaiswal",
+    "franchise": "RR",
+    "isFranchiseIcon": false
+  },
+  "p_059": {
+    "name": "Ishan Kishan",
+    "franchise": "MI",
+    "isFranchiseIcon": false
+  },
+  "p_060": {
+    "name": "Marcus Stoinis",
+    "franchise": "PBKS",
+    "isFranchiseIcon": false
+  },
+  "p_061": {
+    "name": "Vaibhav G Arora",
+    "franchise": "KKR",
+    "isFranchiseIcon": false
+  },
+  "p_062": {
+    "name": "Glenn Maxwell",
+    "franchise": "RCB",
+    "isFranchiseIcon": false
+  },
+  "p_063": {
+    "name": "Rilee Rossouw",
+    "franchise": "PBKS",
+    "isFranchiseIcon": false
+  },
+  "p_064": {
+    "name": "SR Dubey",
+    "franchise": "KKR",
+    "isFranchiseIcon": false
+  },
+  "p_065": {
+    "name": "Ravindra Jadeja",
+    "franchise": "CSK",
+    "isFranchiseIcon": true
+  },
+  "p_066": {
+    "name": "R Shepherd",
+    "franchise": "RCB",
+    "isFranchiseIcon": false
+  },
+  "p_067": {
+    "name": "A Kamboj",
+    "franchise": "CSK",
+    "isFranchiseIcon": false
+  },
+  "p_068": {
+    "name": "Piyush Chawla",
+    "franchise": "MI",
+    "isFranchiseIcon": false
+  },
+  "p_069": {
+    "name": "Akeal Hosein",
+    "franchise": "CSK",
+    "isFranchiseIcon": false
+  },
+  "p_070": {
+    "name": "V Puthur",
+    "franchise": "MI",
+    "isFranchiseIcon": false
+  },
+  "p_071": {
+    "name": "Shivam Dube",
+    "franchise": "CSK",
+    "isFranchiseIcon": true
+  },
+  "p_072": {
+    "name": "Harpreet Brar",
+    "franchise": "PBKS",
+    "isFranchiseIcon": false
+  },
+  "p_073": {
+    "name": "Rasikh Salam",
+    "franchise": "RCB",
+    "isFranchiseIcon": false
+  },
+  "p_074": {
+    "name": "Donovan Ferreira",
+    "franchise": "RR",
+    "isFranchiseIcon": false
+  },
+  "p_075": {
+    "name": "Craig Overton",
+    "franchise": "CSK",
+    "isFranchiseIcon": false
+  },
+  "p_076": {
+    "name": "Swapnil K Singh",
+    "franchise": "RCB",
+    "isFranchiseIcon": false
+  },
+  "p_077": {
+    "name": "S K K Ahmed",
+    "franchise": "DC",
+    "isFranchiseIcon": false
+  },
+  "p_078": {
+    "name": "M S Dhoni",
+    "franchise": "CSK",
+    "isFranchiseIcon": true
+  },
+  "p_079": {
+    "name": "Jaydev Unadkat",
+    "franchise": "SRH",
+    "isFranchiseIcon": false
+  },
+  "p_080": {
+    "name": "Naman Dhir",
+    "franchise": "MI",
+    "isFranchiseIcon": false
+  },
+  "p_081": {
+    "name": "Mitchell Santner",
+    "franchise": "MI",
+    "isFranchiseIcon": false
+  },
+  "p_082": {
+    "name": "Moeen Ali",
+    "franchise": "CSK",
+    "isFranchiseIcon": false
+  },
+  "p_083": {
+    "name": "Ashwani Kumar",
+    "franchise": "MI",
+    "isFranchiseIcon": false
+  },
+  "p_084": {
+    "name": "Urvil Patel",
+    "franchise": "CSK",
+    "isFranchiseIcon": false
+  },
+  "p_085": {
+    "name": "Rashid Khan",
+    "franchise": "GT",
+    "isFranchiseIcon": true
+  },
+  "p_086": {
+    "name": "Rohit Sharma",
+    "franchise": "MI",
+    "isFranchiseIcon": true
+  },
+  "p_087": {
+    "name": "MS Washington Sundar",
+    "franchise": "GT",
+    "isFranchiseIcon": false
+  },
+  "p_088": {
+    "name": "Sherfane Rutherford",
+    "franchise": "GT",
+    "isFranchiseIcon": false
+  },
+  "p_089": {
+    "name": "N Burger",
+    "franchise": "RR",
+    "isFranchiseIcon": false
+  },
+  "p_090": {
+    "name": "Mohsin Khan (2)",
+    "franchise": "LSG",
+    "isFranchiseIcon": false
+  },
+  "p_091": {
+    "name": "Sakib Hussain",
+    "franchise": "SRH",
+    "isFranchiseIcon": false
+  },
+  "p_092": {
+    "name": "Manish Pandey",
+    "franchise": "KKR",
+    "isFranchiseIcon": false
+  },
+  "p_093": {
+    "name": "Akash Singh",
+    "franchise": "LSG",
+    "isFranchiseIcon": false
+  },
+  "p_094": {
+    "name": "Tilak Varma",
+    "franchise": "MI",
+    "isFranchiseIcon": false
+  },
+  "p_095": {
+    "name": "Rinku Singh",
+    "franchise": "KKR",
+    "isFranchiseIcon": true
+  },
+  "p_096": {
+    "name": "A Raghuvanshi",
+    "franchise": "KKR",
+    "isFranchiseIcon": false
+  },
+  "p_097": {
+    "name": "Cameron Green",
+    "franchise": "KKR",
+    "isFranchiseIcon": false
+  },
+  "p_098": {
+    "name": "Jonny Bairstow",
+    "franchise": "PBKS",
+    "isFranchiseIcon": false
+  },
+  "p_099": {
+    "name": "AM Ghazanfar",
+    "franchise": "MI",
+    "isFranchiseIcon": false
+  },
+  "p_100": {
+    "name": "Dhruv Chand Jurel",
+    "franchise": "RR",
+    "isFranchiseIcon": false
+  },
+  "p_101": {
+    "name": "Aavesh Khan",
+    "franchise": "LSG",
+    "isFranchiseIcon": false
+  },
+  "p_102": {
+    "name": "R D Gaikwad",
+    "franchise": "CSK",
+    "isFranchiseIcon": true
+  },
+  "p_103": {
+    "name": "David Miller",
+    "franchise": "GT",
+    "isFranchiseIcon": false
+  },
+  "p_104": {
+    "name": "Yash Dayal",
+    "franchise": "RCB",
+    "isFranchiseIcon": false
+  },
+  "p_105": {
+    "name": "Karan Sharma",
+    "franchise": "RCB",
+    "isFranchiseIcon": false
+  },
+  "p_106": {
+    "name": "Harsh Dubey",
+    "franchise": "SRH",
+    "isFranchiseIcon": false
+  },
+  "p_107": {
+    "name": "Mukesh Kumar",
+    "franchise": "DC",
+    "isFranchiseIcon": false
+  },
+  "p_108": {
+    "name": "Sandeep Sharma",
+    "franchise": "RR",
+    "isFranchiseIcon": true
+  },
+  "p_109": {
+    "name": "Arshad Khan (2)",
+    "franchise": "LSG",
+    "isFranchiseIcon": false
+  },
+  "p_110": {
+    "name": "Pathum Nissanka",
+    "franchise": "DC",
+    "isFranchiseIcon": false
+  },
+  "p_111": {
+    "name": "Naveen-ul-Haq",
+    "franchise": "LSG",
+    "isFranchiseIcon": false
+  },
+  "p_112": {
+    "name": "S N Khan",
+    "franchise": "CSK",
+    "isFranchiseIcon": false
+  },
+  "p_113": {
+    "name": "Kuldeep Sen",
+    "franchise": "RR",
+    "isFranchiseIcon": false
+  },
+  "p_114": {
+    "name": "Ravi Bishnoi",
+    "franchise": "LSG",
+    "isFranchiseIcon": true
+  },
+  "p_115": {
+    "name": "Will Jacks",
+    "franchise": "MI",
+    "isFranchiseIcon": false
+  },
+  "p_116": {
+    "name": "Kartik Tyagi",
+    "franchise": "KKR",
+    "isFranchiseIcon": false
+  },
+  "p_117": {
+    "name": "Prithvi Shaw",
+    "franchise": "DC",
+    "isFranchiseIcon": false
+  },
+  "p_118": {
+    "name": "PR Veer",
+    "franchise": "CSK",
+    "isFranchiseIcon": false
+  },
+  "p_119": {
+    "name": "Anderson Cummins",
+    "franchise": "SRH",
+    "isFranchiseIcon": false
+  },
+  "p_120": {
+    "name": "Abishek Porel",
+    "franchise": "DC",
+    "isFranchiseIcon": false
+  },
+  "p_121": {
+    "name": "M Shahrukh Khan",
+    "franchise": "GT",
+    "isFranchiseIcon": false
+  },
+  "p_122": {
+    "name": "Tushar U Deshpande",
+    "franchise": "CSK",
+    "isFranchiseIcon": false
+  },
+  "p_123": {
+    "name": "D L Chahar",
+    "franchise": "MI",
+    "isFranchiseIcon": false
+  },
+  "p_124": {
+    "name": "Shardul Thakur",
+    "franchise": "CSK",
+    "isFranchiseIcon": false
+  },
+  "p_125": {
+    "name": "Umesh Yadav",
+    "franchise": "KKR",
+    "isFranchiseIcon": false
+  },
+  "p_126": {
+    "name": "Devdutt Padikkal",
+    "franchise": "RCB",
+    "isFranchiseIcon": false
+  },
+  "p_127": {
+    "name": "Sameer Rizvi",
+    "franchise": "DC",
+    "isFranchiseIcon": false
+  },
+  "p_128": {
+    "name": "Suryansh Shedge",
+    "franchise": "PBKS",
+    "isFranchiseIcon": false
+  },
+  "p_129": {
+    "name": "PP Hinge",
+    "franchise": "SRH",
+    "isFranchiseIcon": false
+  },
+  "p_130": {
+    "name": "S Sandeep Warrier",
+    "franchise": "GT",
+    "isFranchiseIcon": false
+  },
+  "p_131": {
+    "name": "M Tiwari",
+    "franchise": "DC",
+    "isFranchiseIcon": false
+  },
+  "p_132": {
+    "name": "Ayush Badoni",
+    "franchise": "LSG",
+    "isFranchiseIcon": true
+  },
+  "p_133": {
+    "name": "Thangarasu Natarajan",
+    "franchise": "SRH",
+    "isFranchiseIcon": false
+  },
+  "p_134": {
+    "name": "Faf du Plessis",
+    "franchise": "RCB",
+    "isFranchiseIcon": false
+  },
+  "p_135": {
+    "name": "Liam Livingstone",
+    "franchise": "PBKS",
+    "isFranchiseIcon": false
+  },
+  "p_136": {
+    "name": "V Nigam",
+    "franchise": "DC",
+    "isFranchiseIcon": false
+  },
+  "p_137": {
+    "name": "Brijesh Sharma",
+    "franchise": "RR",
+    "isFranchiseIcon": false
+  },
+  "p_138": {
+    "name": "Karun Nair",
+    "franchise": "DC",
+    "isFranchiseIcon": false
+  },
+  "p_139": {
+    "name": "M K Lomror",
+    "franchise": "RCB",
+    "isFranchiseIcon": false
+  },
+  "p_140": {
+    "name": "M Siddharth",
+    "franchise": "LSG",
+    "isFranchiseIcon": false
+  },
+  "p_141": {
+    "name": "Yash Raj Punja",
+    "franchise": "RR",
+    "isFranchiseIcon": false
+  },
+  "p_142": {
+    "name": "Rishabh Pant",
+    "franchise": "DC",
+    "isFranchiseIcon": true
+  },
+  "p_143": {
+    "name": "Aniket Verma",
+    "franchise": "SRH",
+    "isFranchiseIcon": false
+  },
+  "p_144": {
+    "name": "Prince Yadav",
+    "franchise": "LSG",
+    "isFranchiseIcon": false
+  },
+  "p_145": {
+    "name": "Gerald Coetzee",
+    "franchise": "MI",
+    "isFranchiseIcon": false
+  },
+  "p_146": {
+    "name": "Wanindu Hasaranga",
+    "franchise": "RCB",
+    "isFranchiseIcon": false
+  },
+  "p_147": {
+    "name": "N Thushara",
+    "franchise": "MI",
+    "isFranchiseIcon": false
+  },
+  "p_148": {
+    "name": "Axar Patel",
+    "franchise": "DC",
+    "isFranchiseIcon": true
+  },
+  "p_149": {
+    "name": "Hardik Pandya",
+    "franchise": "MI",
+    "isFranchiseIcon": true
+  },
+  "p_150": {
+    "name": "Abdul Samad",
+    "franchise": "SRH",
+    "isFranchiseIcon": false
+  },
+  "p_151": {
+    "name": "Nitish Rana",
+    "franchise": "KKR",
+    "isFranchiseIcon": false
+  },
+  "p_152": {
+    "name": "Dewald Brevis",
+    "franchise": "CSK",
+    "isFranchiseIcon": false
+  },
+  "p_153": {
+    "name": "Daryl Mitchell",
+    "franchise": "CSK",
+    "isFranchiseIcon": false
+  },
+  "p_154": {
+    "name": "Kartik Sharma",
+    "franchise": "CSK",
+    "isFranchiseIcon": false
+  },
+  "p_155": {
+    "name": "R D Chahar",
+    "franchise": "PBKS",
+    "isFranchiseIcon": false
+  },
+  "p_156": {
+    "name": "Aiden Markram",
+    "franchise": "LSG",
+    "isFranchiseIcon": false
+  },
+  "p_157": {
+    "name": "Ishant Sharma",
+    "franchise": "DC",
+    "isFranchiseIcon": false
+  },
+  "p_158": {
+    "name": "K Nithish Kumar Reddy",
+    "franchise": "SRH",
+    "isFranchiseIcon": false
+  },
+  "p_159": {
+    "name": "Shubham Dubey",
+    "franchise": "RR",
+    "isFranchiseIcon": false
+  },
+  "p_160": {
+    "name": "Anukul Roy",
+    "franchise": "KKR",
+    "isFranchiseIcon": false
+  },
+  "p_161": {
+    "name": "Lockie Ferguson",
+    "franchise": "PBKS",
+    "isFranchiseIcon": false
+  },
+  "p_162": {
+    "name": "JA Duffy",
+    "franchise": "RCB",
+    "isFranchiseIcon": false
+  },
+  "p_163": {
+    "name": "R K Tewatia",
+    "franchise": "GT",
+    "isFranchiseIcon": false
+  },
+  "p_164": {
+    "name": "Ajinkya Rahane",
+    "franchise": "KKR",
+    "isFranchiseIcon": false
+  },
+  "p_165": {
+    "name": "Marco Jansen",
+    "franchise": "PBKS",
+    "isFranchiseIcon": false
+  },
+  "p_166": {
+    "name": "MD Choudhary",
+    "franchise": "LSG",
+    "isFranchiseIcon": false
+  },
+  "p_167": {
+    "name": "Sam Curran",
+    "franchise": "PBKS",
+    "isFranchiseIcon": true
+  },
+  "p_168": {
+    "name": "Shai Hope",
+    "franchise": "DC",
+    "isFranchiseIcon": false
+  },
+  "p_169": {
+    "name": "J M Sharma",
+    "franchise": "RCB",
+    "isFranchiseIcon": false
+  },
+  "p_170": {
+    "name": "Vijaykumar Vyshak",
+    "franchise": "PBKS",
+    "isFranchiseIcon": false
+  },
+  "p_171": {
+    "name": "Nathan Ellis",
+    "franchise": "PBKS",
+    "isFranchiseIcon": false
+  },
+  "p_172": {
+    "name": "Quinton de Kock",
+    "franchise": "LSG",
+    "isFranchiseIcon": false
+  },
+  "p_173": {
+    "name": "R Powell",
+    "franchise": "KKR",
+    "isFranchiseIcon": false
+  },
+  "p_174": {
+    "name": "Kyle Jamieson",
+    "franchise": "PBKS",
+    "isFranchiseIcon": false
+  },
+  "p_175": {
+    "name": "WP O'Rourke",
+    "franchise": "LSG",
+    "isFranchiseIcon": false
+  },
+  "p_176": {
+    "name": "N Wadhera",
+    "franchise": "PBKS",
+    "isFranchiseIcon": false
+  },
+  "p_177": {
+    "name": "Shahbaz Ahmed",
+    "franchise": "RCB",
+    "isFranchiseIcon": false
+  },
+  "p_178": {
+    "name": "DS Rathi",
+    "franchise": "LSG",
+    "isFranchiseIcon": false
+  },
+  "p_179": {
+    "name": "Azmatullah Omarzai",
+    "franchise": "PBKS",
+    "isFranchiseIcon": false
+  },
+  "p_180": {
+    "name": "Rachin Ravindra",
+    "franchise": "CSK",
+    "isFranchiseIcon": false
+  },
+  "p_181": {
+    "name": "Mukesh Choudhary",
+    "franchise": "CSK",
+    "isFranchiseIcon": false
+  },
+  "p_182": {
+    "name": "Himmat Singh",
+    "franchise": "LSG",
+    "isFranchiseIcon": false
+  },
+  "p_183": {
+    "name": "Shimron Hetmeyer",
+    "franchise": "RR",
+    "isFranchiseIcon": false
+  },
+  "p_184": {
+    "name": "Mohammed Shami",
+    "franchise": "GT",
+    "isFranchiseIcon": false
+  },
+  "p_185": {
+    "name": "M Theekshana",
+    "franchise": "CSK",
+    "isFranchiseIcon": false
+  },
+  "p_186": {
+    "name": "Atharva Taide",
+    "franchise": "PBKS",
+    "isFranchiseIcon": false
+  },
+  "p_187": {
+    "name": "MP Yadav",
+    "franchise": "LSG",
+    "isFranchiseIcon": false
+  },
+  "p_188": {
+    "name": "Shikhar Dhawan",
+    "franchise": "PBKS",
+    "isFranchiseIcon": false
+  },
+  "p_189": {
+    "name": "Ramandeep Singh",
+    "franchise": "KKR",
+    "isFranchiseIcon": false
+  },
+  "p_190": {
+    "name": "Yash Thakur",
+    "franchise": "LSG",
+    "isFranchiseIcon": false
+  },
+  "p_191": {
+    "name": "Shivang Kumar",
+    "franchise": "SRH",
+    "isFranchiseIcon": false
+  },
+  "p_192": {
+    "name": "Ashok Sharma",
+    "franchise": "GT",
+    "isFranchiseIcon": false
+  },
+  "p_193": {
+    "name": "Salil Arora",
+    "franchise": "SRH",
+    "isFranchiseIcon": false
+  },
+  "p_194": {
+    "name": "Ravi Ashwin",
+    "franchise": "RR",
+    "isFranchiseIcon": false
+  },
+  "p_195": {
+    "name": "Mohit Sharma",
+    "franchise": "GT",
+    "isFranchiseIcon": false
+  },
+  "p_196": {
+    "name": "Rahmanullah Gurbaz",
+    "franchise": "KKR",
+    "isFranchiseIcon": false
+  },
+  "p_197": {
+    "name": "JG Bethell",
+    "franchise": "RCB",
+    "isFranchiseIcon": false
+  },
+  "p_198": {
+    "name": "Akash Madhwal",
+    "franchise": "MI",
+    "isFranchiseIcon": false
+  },
+  "p_199": {
+    "name": "David Warner",
+    "franchise": "DC",
+    "isFranchiseIcon": false
+  },
+  "p_200": {
+    "name": "Mayank Agarwal",
+    "franchise": "PBKS",
+    "isFranchiseIcon": false
+  },
+  "p_201": {
+    "name": "Simarjeet Singh",
+    "franchise": "CSK",
+    "isFranchiseIcon": false
+  },
+  "p_202": {
+    "name": "Devon Conway",
+    "franchise": "CSK",
+    "isFranchiseIcon": false
+  },
+  "p_203": {
+    "name": "PHKD Mendis",
+    "franchise": "SRH",
+    "isFranchiseIcon": false
+  },
+  "p_204": {
+    "name": "Kumar Kartikeya Singh",
+    "franchise": "MI",
+    "isFranchiseIcon": false
+  },
+  "p_205": {
+    "name": "Amit Mishra",
+    "franchise": "LSG",
+    "isFranchiseIcon": false
+  },
+  "p_206": {
+    "name": "Vijay Shankar",
+    "franchise": "GT",
+    "isFranchiseIcon": false
+  },
+  "p_207": {
+    "name": "Yudhvir Singh",
+    "franchise": "RR",
+    "isFranchiseIcon": false
+  },
+  "p_208": {
+    "name": "Suyash Sharma",
+    "franchise": "RCB",
+    "isFranchiseIcon": false
+  },
+  "p_209": {
+    "name": "Mayank Markande",
+    "franchise": "SRH",
+    "isFranchiseIcon": false
+  },
+  "p_210": {
+    "name": "Deepak Jagbir Hooda",
+    "franchise": "LSG",
+    "isFranchiseIcon": false
+  },
+  "p_211": {
+    "name": "Xavier Bartlett",
+    "franchise": "PBKS",
+    "isFranchiseIcon": false
+  },
+  "p_212": {
+    "name": "SH Johnson",
+    "franchise": "KKR",
+    "isFranchiseIcon": false
+  },
+  "p_213": {
+    "name": "R A Tripathi",
+    "franchise": "SRH",
+    "isFranchiseIcon": false
+  },
+  "p_214": {
+    "name": "Abhinav Manohar",
+    "franchise": "GT",
+    "isFranchiseIcon": false
+  },
+  "p_215": {
+    "name": "Zeeshan Ansari",
+    "franchise": "SRH",
+    "isFranchiseIcon": false
+  },
+  "p_216": {
+    "name": "Anrich Nortje",
+    "franchise": "DC",
+    "isFranchiseIcon": false
+  },
+  "p_217": {
+    "name": "Dushmantha Chameera",
+    "franchise": "DC",
+    "isFranchiseIcon": false
+  },
+  "p_218": {
+    "name": "Wriddhiman Saha",
+    "franchise": "GT",
+    "isFranchiseIcon": false
+  },
+  "p_219": {
+    "name": "N Sindhu",
+    "franchise": "GT",
+    "isFranchiseIcon": false
+  },
+  "p_220": {
+    "name": "Gurjapneet Singh",
+    "franchise": "CSK",
+    "isFranchiseIcon": false
+  },
+  "p_221": {
+    "name": "Akash Deep",
+    "franchise": "LSG",
+    "isFranchiseIcon": false
+  },
+  "p_222": {
+    "name": "Mohammad Nabi",
+    "franchise": "MI",
+    "isFranchiseIcon": false
+  },
+  "p_223": {
+    "name": "Dasun Shanaka",
+    "franchise": "RR",
+    "isFranchiseIcon": false
+  },
+  "p_224": {
+    "name": "Matthew Henry",
+    "franchise": "CSK",
+    "isFranchiseIcon": false
+  },
+  "p_225": {
+    "name": "Glenn Phillips",
+    "franchise": "GT",
+    "isFranchiseIcon": false
+  },
+  "p_226": {
+    "name": "RA Bawa",
+    "franchise": "MI",
+    "isFranchiseIcon": false
+  },
+  "p_227": {
+    "name": "R Smaran",
+    "franchise": "SRH",
+    "isFranchiseIcon": false
+  },
+  "p_228": {
+    "name": "Raghu Sharma",
+    "franchise": "MI",
+    "isFranchiseIcon": false
+  },
+  "p_229": {
+    "name": "Auqib Nabi",
+    "franchise": "DC",
+    "isFranchiseIcon": false
+  },
+  "p_230": {
+    "name": "Fazalhaq Farooqi",
+    "franchise": "RR",
+    "isFranchiseIcon": false
+  },
+  "p_231": {
+    "name": "MJ Suthar",
+    "franchise": "GT",
+    "isFranchiseIcon": false
+  },
+  "p_232": {
+    "name": "RJW Topley",
+    "franchise": "RCB",
+    "isFranchiseIcon": false
+  },
+  "p_233": {
+    "name": "Mayank Dagar",
+    "franchise": "RCB",
+    "isFranchiseIcon": false
+  },
+  "p_234": {
+    "name": "Anuj Rawat",
+    "franchise": "RCB",
+    "isFranchiseIcon": false
+  },
+  "p_235": {
+    "name": "Kumar Kushagra",
+    "franchise": "DC",
+    "isFranchiseIcon": false
+  },
+  "p_236": {
+    "name": "SK Rasheed",
+    "franchise": "CSK",
+    "isFranchiseIcon": false
+  },
+  "p_237": {
+    "name": "Kwena Maphaka",
+    "franchise": "RR",
+    "isFranchiseIcon": false
+  },
+  "p_238": {
+    "name": "AA Kulkarni",
+    "franchise": "LSG",
+    "isFranchiseIcon": false
+  },
+  "p_239": {
+    "name": "R Minz",
+    "franchise": "MI",
+    "isFranchiseIcon": false
+  },
+  "p_240": {
+    "name": "Sumit Kumar",
+    "franchise": "DC",
+    "isFranchiseIcon": false
+  },
+  "p_241": {
+    "name": "Sanvir Singh",
+    "franchise": "SRH",
+    "isFranchiseIcon": false
+  },
+  "p_242": {
+    "name": "SU Parakh",
+    "franchise": "DC",
+    "isFranchiseIcon": false
+  },
+  "p_243": {
+    "name": "Matt Short",
+    "franchise": "CSK",
+    "isFranchiseIcon": false
+  },
+  "p_244": {
+    "name": "Richard Gleeson",
+    "franchise": "CSK",
+    "isFranchiseIcon": false
+  },
+  "p_245": {
+    "name": "Alzarri Joseph",
+    "franchise": "GT",
+    "isFranchiseIcon": false
+  },
+  "p_246": {
+    "name": "V Viyaskanth",
+    "franchise": "SRH",
+    "isFranchiseIcon": false
+  },
+  "p_247": {
+    "name": "George Linde",
+    "franchise": "LSG",
+    "isFranchiseIcon": false
+  },
+  "p_248": {
+    "name": "TL Seifert",
+    "franchise": "KKR",
+    "isFranchiseIcon": false
+  },
+  "p_249": {
+    "name": "Krish Bhagat",
+    "franchise": "MI",
+    "isFranchiseIcon": false
+  },
+  "p_250": {
+    "name": "R Shreyas Gopal",
+    "franchise": "RR",
+    "isFranchiseIcon": false
+  },
+  "p_251": {
+    "name": "Saurav Chauhan",
+    "franchise": "RCB",
+    "isFranchiseIcon": false
+  },
+  "p_252": {
+    "name": "T Kohler-Cadmore",
+    "franchise": "RR",
+    "isFranchiseIcon": false
+  },
+  "p_253": {
+    "name": "D G Nalkande",
+    "franchise": "GT",
+    "isFranchiseIcon": false
+  },
+  "p_254": {
+    "name": "Abhinandan Singh",
+    "franchise": "RCB",
+    "isFranchiseIcon": false
+  },
+  "p_255": {
+    "name": "Akshat Raghuwanshi",
+    "franchise": "LSG",
+    "isFranchiseIcon": false
+  },
+  "p_256": {
+    "name": "LB Williams",
+    "franchise": "DC",
+    "isFranchiseIcon": false
+  },
+  "p_257": {
+    "name": "Sikandar Raza",
+    "franchise": "PBKS",
+    "isFranchiseIcon": false
+  },
+  "p_258": {
+    "name": "DA Payne",
+    "franchise": "SRH",
+    "isFranchiseIcon": false
+  },
+  "p_259": {
+    "name": "Ashton Turner",
+    "franchise": "LSG",
+    "isFranchiseIcon": false
+  },
+  "p_260": {
+    "name": "Matthew Wade",
+    "franchise": "GT",
+    "isFranchiseIcon": false
+  },
+  "p_261": {
+    "name": "Keshav Maharaj",
+    "franchise": "RR",
+    "isFranchiseIcon": false
+  },
+  "p_262": {
+    "name": "Adam Zampa",
+    "franchise": "RR",
+    "isFranchiseIcon": false
+  },
+  "p_263": {
+    "name": "Gulbadeen Naib",
+    "franchise": "DC",
+    "isFranchiseIcon": false
+  },
+  "p_264": {
+    "name": "L Wood",
+    "franchise": "MI",
+    "isFranchiseIcon": false
+  },
+  "p_265": {
+    "name": "Blessing Muzarabani",
+    "franchise": "KKR",
+    "isFranchiseIcon": false
+  },
+  "p_266": {
+    "name": "Kane Williamson",
+    "franchise": "SRH",
+    "isFranchiseIcon": false
+  },
+  "p_267": {
+    "name": "NA Saini",
+    "franchise": "RCB",
+    "isFranchiseIcon": false
+  },
+  "p_268": {
+    "name": "Harpreet Singh Bhatia",
+    "franchise": "PBKS",
+    "isFranchiseIcon": false
+  },
+  "p_269": {
+    "name": "Lalit Yadav",
+    "franchise": "DC",
+    "isFranchiseIcon": false
+  },
+  "p_270": {
+    "name": "SS Mishra",
+    "franchise": "RR",
+    "isFranchiseIcon": false
+  },
+  "p_271": {
+    "name": "Shams Mulani",
+    "franchise": "MI",
+    "isFranchiseIcon": false
+  },
+  "p_272": {
+    "name": "DV Malewar",
+    "franchise": "MI",
+    "isFranchiseIcon": false
+  },
+  "p_273": {
+    "name": "PVSN Raju",
+    "franchise": "MI",
+    "isFranchiseIcon": false
+  },
+  "p_274": {
+    "name": "Anmolpreet Singh",
+    "franchise": "SRH",
+    "isFranchiseIcon": false
+  },
+  "p_275": {
+    "name": "T Dahiya",
+    "franchise": "KKR",
+    "isFranchiseIcon": false
+  },
+  "p_276": {
+    "name": "Lhuan-dre Pretorius",
+    "franchise": "RR",
+    "isFranchiseIcon": false
+  },
+  "p_277": {
+    "name": "Arjun Tendulkar",
+    "franchise": "MI",
+    "isFranchiseIcon": false
+  },
+  "p_278": {
+    "name": "Ricky Bhui",
+    "franchise": "DC",
+    "isFranchiseIcon": false
+  },
+  "p_279": {
+    "name": "Kulwant Khejroliya",
+    "franchise": "GT",
+    "isFranchiseIcon": false
+  },
+  "p_280": {
+    "name": "Wiaan Mulder",
+    "franchise": "SRH",
+    "isFranchiseIcon": false
+  },
+  "p_281": {
+    "name": "JB Little",
+    "franchise": "GT",
+    "isFranchiseIcon": false
+  },
+  "p_282": {
+    "name": "Mujeeb Ur Rahman",
+    "franchise": "PBKS",
+    "isFranchiseIcon": false
+  },
+  "p_284": {
+    "name": "Gowtham K",
+    "franchise": "LSG",
+    "isFranchiseIcon": false
+  },
+  "p_285": {
+    "name": "R R Dhawan",
+    "franchise": "PBKS",
+    "isFranchiseIcon": false
+  },
+  "p_286": {
+    "name": "Matthew Breetzke",
+    "franchise": "LSG",
+    "isFranchiseIcon": false
+  },
+  "p_287": {
+    "name": "Adam Milne",
+    "franchise": "MI",
+    "isFranchiseIcon": false
+  },
+  "p_288": {
+    "name": "Kusal Mendis",
+    "franchise": "GT",
+    "isFranchiseIcon": false
+  },
+  "p_289": {
+    "name": "Sediqullah Atal",
+    "franchise": "DC",
+    "isFranchiseIcon": false
+  },
+  "p_290": {
+    "name": "Umran Malik",
+    "franchise": "SRH",
+    "isFranchiseIcon": false
+  },
+  "p_291": {
+    "name": "Karim Janat",
+    "franchise": "GT",
+    "isFranchiseIcon": false
+  },
+  "p_292": {
+    "name": "Chetan Sakariya",
+    "franchise": "RR",
+    "isFranchiseIcon": false
+  },
+  "p_293": {
+    "name": "Ben Dwarshuis",
+    "franchise": "PBKS",
+    "isFranchiseIcon": false
+  },
+  "p_294": {
+    "name": "Jhye Richardson",
+    "franchise": "PBKS",
+    "isFranchiseIcon": false
+  },
+  "p_295": {
+    "name": "Musheer Khan",
+    "franchise": "PBKS",
+    "isFranchiseIcon": false
+  },
+  "p_296": {
+    "name": "KS Rathore",
+    "franchise": "RR",
+    "isFranchiseIcon": false
+  },
+  "p_297": {
+    "name": "H Sharma",
+    "franchise": "RCB",
+    "isFranchiseIcon": false
+  },
+  "p_298": {
+    "name": "V Kaverappa",
+    "franchise": "PBKS",
+    "isFranchiseIcon": false
+  },
+  "p_299": {
+    "name": "Sachin Baby",
+    "franchise": "SRH",
+    "isFranchiseIcon": false
+  },
+  "p_300": {
+    "name": "S Joseph",
+    "franchise": "LSG",
+    "isFranchiseIcon": false
+  },
+  "p_301": {
+    "name": "D Madushanka",
+    "franchise": "SRH",
+    "isFranchiseIcon": false
+  },
+  "p_302": {
+    "name": "Tanush Kotian",
+    "franchise": "RR",
+    "isFranchiseIcon": false
+  },
+  "p_303": {
+    "name": "Manoj Bhandage",
+    "franchise": "RCB",
+    "isFranchiseIcon": false
+  },
+  "p_304": {
+    "name": "BR Sharath",
+    "franchise": "GT",
+    "isFranchiseIcon": false
+  },
+  "p_305": {
+    "name": "MJ Owen",
+    "franchise": "PBKS",
+    "isFranchiseIcon": false
+  },
+  "p_306": {
+    "name": "Mayank Rawat",
+    "franchise": "MI",
+    "isFranchiseIcon": false
+  },
+  "p_308": {
+    "name": "Vishnu Vinod",
+    "franchise": "MI",
+    "isFranchiseIcon": false
+  },
+  "p_309": {
+    "name": "T Vijay",
+    "franchise": "DC",
+    "isFranchiseIcon": false
+  },
+  "p_310": {
+    "name": "Suyash S Prabhudessai",
+    "franchise": "RCB",
+    "isFranchiseIcon": false
+  },
+  "p_311": {
+    "name": "Ravi Singh",
+    "franchise": "RR",
+    "isFranchiseIcon": false
+  },
+  "p_312": {
+    "name": "RS Ghosh",
+    "franchise": "CSK",
+    "isFranchiseIcon": false
+  },
+  "p_313": {
+    "name": "Pravin Dubey",
+    "franchise": "DC",
+    "isFranchiseIcon": false
+  },
+  "p_314": {
+    "name": "Shivam Singh",
+    "franchise": "PBKS",
+    "isFranchiseIcon": false
+  }
+}

@@ -1,0 +1,68 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #090B10;
+  --foreground: #F1F5F9;
+}
+
+body {
+  background-color: #090B10;
+  color: #F1F5F9;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", Inter, system-ui, sans-serif;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* iOS Dark Bento Hairline Borders & Surfaces */
+.ios-card {
+  background-color: #12151E;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 1.25rem; /* 20px */
+}
+
+.ios-card-lg {
+  background-color: #12151E;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 1.5rem; /* 24px */
+}
+
+.ios-elevated {
+  background-color: #1C202E;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 0.75rem; /* 12px */
+}
+
+.ios-segmented {
+  background-color: #1C202E;
+  padding: 0.25rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.ios-segmented-active {
+  background-color: #2C3246;
+  color: #FFFFFF;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.3);
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Custom scrollbar for dark bento */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #090B10;
+}
+::-webkit-scrollbar-thumb {
+  background: #1E2638;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #2D374D;
+}

@@ -1,0 +1,264 @@
+# IPL_AUCTION_AND_MANAGER_UI_MASTER_SPEC
+# ARCHITECTURE: Pure Dark-Mode Bento Grid (Zero Neumorphism, Zero Blocking Modals on Live Timers)
+# SESSION: Server-Authoritative WebSocket | 7s Debounced MongoDB Auto-Save | Guest Device-Binding
+
+GLOBAL_DESIGN_PRINCIPLES:
+  layout_paradigm: Fixed-viewport Bento Grid with self-contained panels and in-place inspectors
+  visual_style: Dark mode surfaces, subtle borders, semantic status highlights (no neumorphic shadows)
+  navigation_rule: Zero nested popups blocking active countdown clocks; all inspections happen inside dedicated Bento panels
+  persistence_and_sync:
+    auto_save_interval: 7_seconds_debounced_on_dirty_state
+    host_manual_override: Force_Save_Button_and_Pause_Toggle
+    guest_identity_key: "teamId + playerName + clientIP + localStorage_deviceUUID" (prevents same-Wi-Fi NAT collisions)
+
+# ==============================================================================
+# SCREEN 1: FAST ENTRY, LOBBY & ROOM RECOVERY (Route: /)
+# ==============================================================================
+SCREEN_1_ENTRY_AND_RECOVERY:
+  bento_1_guest_quick_join:
+    inputs:
+      - display_name_input: Text field for guest handle
+      - room_code_input: Text field for room PIN (e.g., IPL-8X9K)
+    hidden_state:
+      - device_uuid: Auto-generated and persisted in localStorage on first visit
+    actions:
+      - join_as_guest_button: Connects to room socket without requiring account registration
+    reconnection_and_claim_flow:
+      - existing_seat_match: Automatically re-binds guest back to their franchise if Name + Room Code + UUID/IP match a disconnected human seat
+      - mid_game_join_picker: If credentials do not match an existing human, displays a "Claim an AI Franchise" Bento selector listing all currently AI-controlled teams
+
+  bento_2_host_command_center:
+    authentication:
+      - host_auth_gate: JWT / OAuth login required strictly for the Host to own the MongoDB document
+    room_creation_controls:
+      - pool_mode_selector: Radio/pill toggle for active dataset & accelerated round rules (e.g., Active Pool 1-Acc vs. 2-Acc)
+      - determinism_slider: Host-configurable skill-anchor slider (default 0.45)
+      - create_room_button: Generates unique room PIN and initializes 10 franchises in RAM + MongoDB
+    saved_rooms_recovery_list:
+      - room_history_rows: List of Host's saved rooms fetched from MongoDB showing Room PIN, current phase (Auction / Match X of 70), and timestamp
+      - resume_room_button: One-click state hydration from MongoDB back into active WebSocket RAM
+
+# ==============================================================================
+# SCREEN 2: 3-MINUTE PRE-AUCTION PRIORITY WISHLIST (Route: /wishlist)
+# ==============================================================================
+SCREEN_2_PRE_AUCTION_WISHLIST:
+  floating_top_status_bar:
+    - countdown_timer: Fixed 3:00 floating clock counting down to 0:00
+    - human_submission_counter: Displays "Submitted: X / Y Humans"
+    - submit_wishlist_button: Locks user's priority list; when all humans submit OR timer hits 0:00, triggers a 5.0s "Auction Starting..." overlay and transitions to Screen 3
+
+  bento_1_filter_and_search_bar:
+    - search_input: Instant text search by player name or country
+    - role_filter_pills: Toggle pills for [ALL, BAT, WK, AR, PACE, SPIN]
+    - sub_type_dropdown: Filter by tactical archetype (OPENER_ATTACK, TOP_ORDER_ANCHOR, POWER_FINISHER, BAT_AR, BOWL_AR, DEATH_OVERS_PACER, MYSTERY_SPINNER, etc.)
+    - hand_and_style_toggles:
+        batting_hand: [ALL, LHB, RHB]
+        bowling_type: [ALL, PACE, SPIN, NONE]
+        bowling_arm: [ALL, L-Arm, R-Arm]
+    - quick_attribute_toggles:
+        - overseas_only_checkbox
+        - domestic_only_checkbox
+        - uncapped_only_checkbox
+        - stat_threshold_pills: [OVR >= 85, BAT >= 80, BOWL >= 80, POWER >= 85, Base Price <= 1.00 Cr, Marquee Set 1-2]
+
+  bento_2_player_pool_table:
+    columns:
+      - priority_star_toggle: One-click checkbox/star to add/remove player from `human.wishlistIds`
+      - set_and_id: Auction Set number and player ID
+      - identity_cell: Player Name, Country, Overseas Airplane badge (if `isOverseas`), Uncapped pill (if `isUncapped`), Age
+      - role_and_archetype: Primary Role badge + granular Sub-Type badge
+      - hand_and_style: Bat Hand tag (LHB/RHB) + Bowling Style label
+      - core_ratings: OVR badge + inline visual progress bars and numbers for BAT, PWR, BOWL, FLD
+      - physical_metrics: Stamina Recovery rating and Injury Risk percentage
+      - synergy_tags: Ground synergy pills (+Spin, +Pace, +Power, +Dew when vector >= 0.50)
+      - valuation_columns: Base Price (Cr) and Estimated V1.7 Valuation (Cr)
+
+  bento_3_my_ticked_targets_sidebar:
+    - ticked_counter_header: Total count of wishlisted players
+    - ticked_player_list: Compact scrollable list showing selected player names, roles, base prices, and a quick remove (X) button
+
+# ==============================================================================
+# SCREEN 3: SINGLE-SCREEN AUCTION ARENA (Route: /auction)
+# ==============================================================================
+SCREEN_3_AUCTION_ARENA:
+  top_host_and_room_bar:
+    - room_pin_badge: Displays active Room PIN
+    - round_and_pool_indicator: Current Auction Phase (MAIN ROUND, ACC ROUND 1, ACC ROUND 2) + Remaining Players in Pool count
+    - auto_save_status_pill: Live indicator ("Auto-Saved Xs ago")
+    - host_only_controls:
+        - force_save_button: Immediately flushes dirty room state to MongoDB with confirmation toast
+        - pause_game_toggle: Freezes/resumes the 5.0s lot clock
+
+  disconnect_and_pause_overlay (Triggered automatically if any human socket drops):
+    - status_banner: "Player [Name] ([Team]) Disconnected — Game Paused"
+    - host_action_buttons:
+        - wait_for_reconnect_button: Keeps clock frozen until guest re-authenticates via Name + PIN + UUID
+        - replace_with_ai_and_continue_button: Converts seat to AI controller while preserving the human's exact `wishlistIds` as Tier-1 AI ticks, current squad, and purse
+
+  bento_1_franchise_list_panel:
+    - franchise_rows (10 teams):
+        - team_identity: Franchise code/name + controller tag (YOU, HUMAN, AI)
+        - live_status_indicator: Visual state for current lot (LEADING, ACTIVE, FILTER-SKIPPED, MANUAL-SKIPPED, NO_BID)
+        - purse_and_slots_summary: Remaining Purse (Cr), Total Squad count (X/25)[cite: 1], Overseas count (X/8)[cite: 1]
+        - inspect_roster_button: Clicking `[Roster]` loads that franchise's details into Bento 3 (Franchise Inspector) in-place without opening a modal
+
+  bento_2_player_lot_hero_and_bidding_arena:
+    player_lot_hero_section:
+      - header_badges:
+          - overseas_badge: Airplane icon + "OVERSEAS" (if `isOverseas == true`)
+          - uncapped_badge: "UNCAPPED" tag (if `isUncapped == true`)
+          - high_buzz_badge: "HIGH BUZZ" tag (if combined Human + AI wishlist ticks >= 3)[cite: 1]
+          - wishlist_target_indicator: Special border highlight + "★ PRIORITY TARGET" tag if player is in user's `wishlistIds`[cite: 1]
+          - mandatory_guard_warning: Warning badge if Mandatory WK Guard or Mandatory 18-Slot Guard forced the user ACTIVE[cite: 1]
+      - bio_and_style_row: Player Name, Age, OVR Rating badge, Primary Role, Sub-Type, Batting Hand pill (LHB/RHB), Bowling Style pill
+      - attribute_bars: BAT, POWER, BOWL, FIELDING, Stamina Recovery, Injury Risk
+      - stadium_and_tactical_fit: Home Ground Synergy percentage boost/penalty for the viewing user's stadium + Historical stats summary (Matches, Avg, SR, Econ)
+    bidding_arena_section:
+      - current_bid_display: Large price readout (Base Price or Current Leading Bid in Cr) + Leading Franchise badge
+      - lot_countdown_bar: 5.0-second visual progress bar and numeric timer (resets to 5.0s on every valid Mode B bid)[cite: 1]
+      - mode_a_silent_banner (When all humans are skipped at t=0.0s):
+          - status_text: "ALL HUMANS SKIPPED — AI RESOLVING IN Xs"
+          - interruption_action: Pulsing `[UNSKIP & BID BASE PRICE]` button (1.5s cooldown guard; transitions lot to Mode B Live and resets clock to 5.0s)[cite: 1]
+      - mode_b_live_controls (When at least one human is ACTIVE):
+          - bid_increment_button: `[BID +₹0.25 Cr]` (sends optimistic-locked `{lotId, expectedPrice, bidAmount}`)[cite: 1]
+          - master_skip_toggle_button: Toggles user state between `ACTIVE` and `MANUAL_SKIPPED`[cite: 1]
+
+  bento_3_in_place_franchise_inspector:
+    - header_selector: Currently inspected franchise name (defaults to user's own team; switches whenever any team's `[Roster]` button is clicked in Bento 1)
+    - budget_and_constraints_summary:
+        - remaining_purse_readout
+        - squad_size_progress: X / 25 (with minimum 18 indicator)[cite: 1]
+        - overseas_slots_tracker: 8 visual slot icons (filled vs. empty)[cite: 1]
+    - role_composition_bars:
+        - progress_indicators: Live counts against soft targets for WK (min 1)[cite: 1], BAT, AR, PACE, SPIN
+    - inspector_tabs:
+        - tab_1_bought_roster: Scrollable list of acquired players showing Name, Role, Overseas tag, and winning Price paid
+        - tab_2_my_wishlist: User's remaining priority ticked players yet to appear
+        - tab_3_remaining_pool: Quick view of unauctioned players remaining in the current phase
+
+  bento_4_live_skip_filter_box:
+    - filter_header: Live User status readout (`ACTIVE`, `AUTO-SKIPPED BY FILTER`, `MANUAL SKIP`, `LOCKED ACTIVE BY WISHLIST/GUARD`)[cite: 1]
+    - instant_server_filter_pills (Toggling updates `human.filterConfig` in server RAM immediately)[cite: 1]:
+        - ovr_threshold_toggle: e.g., Skip if `OVR < 85`
+        - bat_threshold_toggle: e.g., Skip if `BAT < 80`
+        - bowl_threshold_toggle: e.g., Skip if `BOWL < 80`
+        - base_price_cap_toggle: e.g., Skip if `Base Price > ₹2.00 Cr`
+        - skip_overseas_toggle: Auto-skip all overseas lots
+        - skip_filled_roles_toggle: Auto-skip roles where squad soft target is already met
+
+  bento_5_live_commentary_and_ticker:
+    - event_stream: Real-time scrolling log of lot outcomes (`[SOLD] Player to Team for ₹X Cr`, `[UNSOLD] Player`, `[FILTER-SKIP]`, `[HUMANS SKIPPED -> AI VICKREY RESOLUTION]`)
+
+# ==============================================================================
+# SCREEN 4: POST-AUCTION ANALYTICS & RIVAL SCOUTING (Route: /analytics)
+# ==============================================================================
+SCREEN_4_POST_AUCTION_ANALYTICS:
+  top_navigation_header:
+    - title_banner: Post-Auction Squad Audit & Scouting Report
+    - proceed_button: `[PROCEED TO SEASON HUB ->]`
+
+  bento_1_squad_comparison_graph:
+    - team_comparison_selectors: Dropdown A (defaults to User's Team) vs. Dropdown B (Select any Rival Franchise or League Average)
+    - comparative_radar_or_bar_chart:
+        - axes: Batting Consistency, Boundary Power, Pace Attack, Spin Attack, Fielding & Athleticism, Bench Depth (Players 12–18 OVR)
+
+  bento_2_rival_weak_point_scouting_panel:
+    - team_scouting_cards (Generated via O(1) 5-rule evaluation of each team's top 11):
+        - spin_vulnerability_tip: Triggered if `avg(SPIN_bowlers_OVR) < 78` -> recommends `'Spin-Attack'` tactic in Overs 7–16
+        - pace_death_vulnerability_tip: Triggered if `count(PACE_bowlers_OVR >= 82) < 2` -> recommends `'Pace-Attack'` in Overs 1–6 & 17–20
+        - hand_monotony_tip: Triggered if >= 4 of top 5 batters share the same hand (`RHB` or `LHB`) -> recommends opposite-turning spin early
+        - shallow_bench_tip: Triggered if `avg(Players_12_to_18_OVR) < 73` -> highlights late-season fatigue vulnerability after Match 6
+        - low_power_finishing_tip: Triggered if `avg(Middle_Order_Power) < 78` -> recommends `'Boundary-Defensive'` / inner-ring squeeze fielding
+
+# ==============================================================================
+# SCREEN 5: SEASON HUB, MATCH MANAGER & LIVE SIMULATOR (Route: /season)
+# ==============================================================================
+SCREEN_5_SEASON_HUB:
+  persistent_top_navigation_bar:
+    view_switcher_tabs:
+      - tab_1_match_center: Active/upcoming fixture arena, live/batch over-by-over scorecard, and commentary
+      - tab_2_team_manager: Pre-match 2-stage lineup builder (Two-Box Playing 11 swap, Batting Order, `3-5-2` Bowlers, Phase Tactics)
+      - tab_3_fixtures: Full 70-match league schedule + playoff bracket with past results
+      - tab_4_points_table: 10-team standings (Played, Won, Lost, Net Run Rate, Points, Form streak)
+      - tab_5_season_stats: All-in-one leaderboards (Orange Cap, Purple Cap, MVP, Highest Team Totals, Best Strike Rates)
+    master_flow_controllers (Right-aligned in Top Bar):
+      - auto_skip_ai_toggle (Host Only):
+          - state_on: AI vs. AI matches simulate automatically, display their scorecard for 10 seconds, and auto-advance to the next fixture until a Human match is reached
+          - human_match_safeguard: Never auto-skips a match involving a Human team; Human match scorecards remain locked on screen until `[NEXT]` is explicitly clicked
+      - play_or_next_action_button:
+          - voting_badge: Displays human readiness/advance votes (`Votes: X / Y Humans`)
+          - behavior: Starts simulation when ready or advances from a completed match scorecard to the next fixture
+
+  # ----------------------------------------------------------------------------
+  # SUB-VIEW 5A: TEAM MANAGER (Active during 45s–60s Pre-Match Human Setup)
+  # ----------------------------------------------------------------------------
+  subview_team_manager:
+    top_matchup_and_environment_bar:
+      - fixture_header: User Team vs. Opponent Team + Home Venue Name
+      - pitch_and_weather_badges: Venue Synergy multipliers (Spin, Pace, Short Boundary Power, Evening Dew factor) + Weather state (Clear, Overcast, Dry/Hot)
+      - setup_countdown_clock: 45s or 60s countdown timer (auto-locks naive/current valid configuration at 0:00)
+      - stage_switcher_button: `[LOCK PLAYING 11 & PROCEED TO TACTICS ->]` (moves from Stage 1 to Stage 2)
+
+    stage_1_two_box_playing_11_swap:
+      - box_a_active_playing_11 (Left Bento):
+          - legality_header_counters: `11 / 11 Players`, `Overseas: X / 4`, `Wicketkeepers: X (Min 1)`, `Bowlers: X (Min 6)`
+          - player_rows: Displays Name, Role, Sub-Type, Hand/Bowl Style, OVR, Stamina bar, Ground Fit badge, and a `[Bench ->]` action button
+      - box_b_available_squad_bench (Right Bento):
+          - bench_player_rows: Displays remaining squad members with Injury status badge, Stamina recovery indicator, and an `[<- Add to XI]` button
+          - hard_legality_guard: Automatically disables `[<- Add to XI]` with a tooltip reason if adding that player would violate `OS <= 4`, `WK >= 1`, `Bowlers >= 6`, or if the player is injured
+      - quick_helper_buttons:
+          - reset_to_naive_default_button
+          - auto_fill_smart_xi_button
+
+    stage_2_batting_order_3_5_2_bowlers_and_tactics:
+      - bento_panel_1_batting_order_1_to_11:
+          - reorderable_list: Slots `#1` through `#11` showing Batter Name, `LHB/RHB` tag, `BAT` & `PWR` ratings, and phase suitability tags (`PP`, `MID`, `DEATH`)
+          - partnership_synergy_indicator: Highlights Left-Right hand combinations and Anchor/Aggressor pairings
+      - bento_panel_2_phase_bowler_3_5_2_selector:
+          - quota_tracker_header: Displays resolved overs per bowler (`pp / mid / death / total <= 4`) calculated live by the `4-2-2` overlap engine (`Total = 20 Overs`)
+          - powerplay_pool_box (Overs 1–6): Shows 4 candidate bowlers -> User checks **3 bowlers** (2 overs each) + selects **1 `[First Bowler]`** radio tag for Over 1
+          - middle_overs_pool_box (Overs 7–16): Shows 6 candidate bowlers -> User checks **5 bowlers** (displays remaining usable overs `4`, `2`, or `0` after PP/Death overlap deductions)
+          - death_overs_pool_box (Overs 17–20): Shows 4 candidate bowlers -> User checks **2 bowlers** (2 overs each; enforces max 1 overlap with PP so Middle phase never starves)
+          - backup_bowler_selector: Dropdown to designate 1 emergency injury replacement bowler
+      - bento_panel_3_phase_tactics_matrix:
+          - powerplay_tactics (Overs 1–6):
+              batting_pill_selector: `[DEFENSIVE, BALANCED, AGGRESSIVE, SPIN_ATTACK, PACE_ATTACK]`
+              bowling_pill_selector: `[BALANCED, PACE_ATTACK, SPIN_SQUEEZE, WICKET_HUNT, BOUNDARY_DEFENSIVE]`
+          - middle_tactics (Overs 7–16): Same Batting & Bowling tactic selectors
+          - death_tactics (Overs 17–20): Same Batting & Bowling tactic selectors
+
+  # ----------------------------------------------------------------------------
+  # SUB-VIEW 5B: MATCH CENTER & SCORECARD VIEWER
+  # ----------------------------------------------------------------------------
+  subview_match_center:
+    top_scoreboard_banner:
+      - team_1_score_summary: Team Name, Total Runs / Wickets, Overs (e.g., `198/4 (20.0)`), Run Rate
+      - team_2_score_summary: Team Name, Total Runs / Wickets, Overs, Target / Required Run Rate (or Match Result banner + Player of the Match badge)
+      - playback_mode_controls:
+          - reveal_speed_toggle: `[Instant Full Result]` vs. `[0.5s Animated Over-by-Over Reveal]`
+          -ai_match_auto_advance_timer: Shows `10s–25s` countdown banner during AI vs. AI games (absent on Human matches so Human scorecards never auto-close)
+
+    bento_1_batting_and_bowling_scorecards (Innings 1 & Innings 2 Tabs):
+      - batting_table:
+          - columns: Batter Name, Dismissal Text (`c Fielder b Bowler`, `lbw`, `bowled`, `not out`), Runs, Balls Faced, 4s, 6s, Strike Rate (populated via the 60/40 Striker/Non-Striker Post-Over Splitter)
+      - bowling_table:
+          - columns: Bowler Name, Overs, Maidens, Runs Conceded, Wickets, Economy Rate
+
+    bento_2_over_by_over_manhattan_and_worm_summary:
+      - over_log_strip: 20-over grid showing Over #, Bowler Name, Striker/Non-Striker pair, Runs & Wickets in that over (`R_k / W_k`), and active Phase Tactic tags
+
+    bento_3_ball_by_ball_commentary_feed:
+      - delivery_log: Scrollable feed of key deliveries (boundaries, wickets, tactical switches, momentum bowler changes)
+
+  # ----------------------------------------------------------------------------
+  # SUB-VIEW 5C: FIXTURES, POINTS TABLE & SEASON STATS HUB
+  # ----------------------------------------------------------------------------
+  subview_season_records_and_standings:
+    bento_fixtures_list:
+      - match_cards: Match #, Home vs. Away Team, Venue, Status (`COMPLETED` with score summary or `UPCOMING`), highlighting Human fixtures
+    bento_points_table:
+      - standings_grid: Rank (Top 4 highlighted for Playoffs), Team, M, W, L, NRR, Pts, Last 5 Matches badges
+    bento_season_stats_dashboard:
+      - orange_cap_card: Top run-scorers leaderboard (Player, Team, Matches, Runs, Avg, SR)
+      - purple_cap_card: Top wicket-takers leaderboard (Player, Team, Matches, Wickets, Econ, Bowl SR)
+      - season_mvp_and_records_card: MVP points leader, Highest Individual Score, Best Bowling Figures, Highest Team Total, Most Sixes
