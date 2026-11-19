@@ -15,7 +15,8 @@
 dist
 
 # Environment variables & secrets (Security Hardening Point 1 & 2)
-.env*.tsbuildinfo
+.env*
+*.tsbuildinfo
 *.local
 .env
 atlas-credentials.env
