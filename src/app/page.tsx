@@ -871,9 +871,17 @@ export default function EntryLobbyPage() {
         </div>
       </div>
 
-      {/* Footer */}
-      <footer className="max-w-4xl mx-auto w-full pt-4 border-t border-white/[0.06] text-center text-xs text-slate-500 font-mono">
-        Official ₹125.00 Cr Purse • Real 2026 Squad Bounds • Live Multiplayer Engine
+      {/* Footer & Creator Attribution */}
+      <footer className="mt-auto py-6 max-w-4xl mx-auto w-full border-t border-white/[0.06] text-center text-xs text-zinc-500 font-medium tracking-wide flex flex-col items-center gap-1.5">
+        <div className="font-mono text-slate-500 text-[11px]">
+          Official ₹125.00 Cr Purse • Real 2026 Squad Bounds • Live Multiplayer Engine
+        </div>
+        <div>
+          Crafted with passion for IPL & Cricket by{' '}
+          <span className="text-zinc-300 font-semibold hover:text-amber-400 transition-colors cursor-default">
+            Soumajit
+          </span>
+        </div>
       </footer>
     </main>
   );
