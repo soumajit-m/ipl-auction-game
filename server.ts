@@ -9,6 +9,7 @@ import next from 'next';
 import { Server as SocketIOServer } from 'socket.io';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as os from 'os';
 import { connectToDatabase } from './src/lib/mongodb';
 import { SocketHub } from './src/server/socketHub';
 import { env } from './src/lib/env';
@@ -73,8 +74,18 @@ async function bootstrap() {
     (global as any).socketHub = socketHub;
 
     server.listen(port, '0.0.0.0', () => {
+      let localIp = 'localhost';
+      const nets = os.networkInterfaces();
+      for (const name of Object.keys(nets)) {
+        for (const net of nets[name] || []) {
+          if (net.family === 'IPv4' && !net.internal) {
+            localIp = net.address;
+            break;
+          }
+        }
+      }
       console.log(`> Server ready on http://localhost:${port}`);
-      console.log(`> Network access (Same Wi-Fi): http://10.32.29.44:${port}`);
+      console.log(`> Network access (Same Wi-Fi): http://${localIp}:${port}`);
       console.log(`> Mode: ${env.NODE_ENV} | Fast Clock: ${env.DEV_FAST_CLOCK}`);
     });
   } catch (error) {

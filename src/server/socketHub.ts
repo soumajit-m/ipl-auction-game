@@ -134,8 +134,9 @@ export class SocketHub {
       if (room) return room;
       room = Array.from(this.rooms.values()).find(rm => rm.roomCode.toUpperCase() === clean);
       if (room) return room;
+      return undefined;
     }
-    // Fallback: If only 1 room is loaded in memory, safely bind to it
+    // Fallback: If no roomCode was provided and only 1 room is loaded in memory
     if (this.rooms.size === 1) {
       return Array.from(this.rooms.values())[0];
     }
@@ -778,6 +779,30 @@ export class SocketHub {
         room = (await this.restoreRoomFromDB(rawCode.toUpperCase().trim())) || undefined;
       }
       if (!room) return;
+
+      const isHost = Boolean(
+        socket.data.isHost ||
+        (data?.hostId && data.hostId === room.hostId) ||
+        socket.id === room.hostSocketId ||
+        !room.seats.some(s => s.isHuman)
+      );
+
+      // Privileged host-only commands require verified host rights
+      const privilegedActions = [
+        'START_AUCTION',
+        'FORCE_SAVE',
+        'TOGGLE_PAUSE',
+        'TOGGLE_SPEED',
+        'REPLACE_HUMAN_WITH_AI',
+        'TOGGLE_AUTO_SKIP_AI',
+        'SIMULATE_ALL_MATCHES',
+        'FORCE_SIMULATE'
+      ];
+
+      if (privilegedActions.includes(data.action) && !isHost) {
+        socket.emit('error_message', { message: 'Unauthorized: Host privileges required for this action.' });
+        return;
+      }
 
       switch (data.action) {
         case 'START_AUCTION':

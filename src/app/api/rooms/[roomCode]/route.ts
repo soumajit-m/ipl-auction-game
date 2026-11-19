@@ -40,6 +40,7 @@ export async function DELETE(
       if (activeRoom.hostId === effectiveHostId) {
         if (activeRoom.lotClockInterval) clearInterval(activeRoom.lotClockInterval);
         if (activeRoom.wishlistClockInterval) clearInterval(activeRoom.wishlistClockInterval);
+        if (activeRoom.seasonClockInterval) clearInterval(activeRoom.seasonClockInterval);
         activeRoom.aiBidTimeouts.forEach((t: any) => clearTimeout(t));
         socketHub.rooms.delete(roomCode);
       }

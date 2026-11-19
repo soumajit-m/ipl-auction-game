@@ -1,6 +1,0 @@
-System / Design Constraints:
-• Color & Gradients: Strictly ban all purple/indigo/violet gradients, dark-mode radial glows, and neon accent pairs. Pick a single, restrained, high-contrast primary palette or adopt an intentional design direction (e.g., editorial, technical, or warm-minimal).
-• Card & Container Hierarchy: Ban nested cards (cards inside cards inside containers). Remove at least one unnecessary background or border layer from every section. Use clean whitespace, hairline borders (1px solid), or subtle surface shifts instead of heavy drop shadows and glowing pills.
-• Icons & Components: Do not use generic AI-favored icons (like the classic Lucid React sparkle icon or random floating status dots). Use a cohesive, standard icon set or replace decorative icon boxes with clear typography and real data.
-• Content & Copy: Replace vague SaaS marketing fluff (e.g., "Transform your workflow", "Supercharge your productivity") with concrete, product-specific micro-copy describing what the app actually scans, parses, computes, or displays.
-• Visual Dominance: Do not give every single feature block equal visual weight. Make one core artifact or data point visually dominant (e.g., the actual output, code diff, table, or primary workspace) and let secondary elements sit quietly.
