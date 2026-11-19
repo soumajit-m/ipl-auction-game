@@ -6,8 +6,7 @@
   "scripts": {
     "dev": "tsx watch server.ts",
     "build": "next build",
-    "start": "tsx server.ts",
-    "build:models": "python scripts/train_match_over_model.py && python scripts/train_auction_bid_model.py"
+    "start": "tsx server.ts"
   },
   "keywords": [],
   "author": "",

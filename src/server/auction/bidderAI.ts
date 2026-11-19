@@ -130,11 +130,8 @@ export const MAX_ROLE_CAPS: Record<PrimaryRole, number> = {
   SPIN: 6
 };
 
-// Standard IPL Bid Increment Ladder with Dynamic Formula min((2 ** floor(current_bid / 5)) * 0.25, 1.0) Cr
-export function getNextBidIncrement(currentBid: number): number {
-  const steps = Math.floor(Math.max(0, currentBid) / 5.0);
-  return Math.min(Math.pow(2, steps) * 0.25, 1.00);
-}
+import { getNextBidIncrement, getHumanMinPurseReserve } from '../../types/auction.types';
+export { getNextBidIncrement, getHumanMinPurseReserve };
 
 // Accelerated Round Base Price Reduction
 export function getAcceleratedBasePrice(basePrice: number): number {

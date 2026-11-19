@@ -26,10 +26,12 @@ export function generate6DigitOtp(): string {
 }
 
 export async function sendOtpEmail(email: string, code: string, purpose: 'REGISTER' | 'LOGIN_OTP'): Promise<boolean> {
-  // Always log clearly to console in terminal
-  console.log(`\n======================================================`);
-  console.log(`[EMAIL OTP for ${email}] (${purpose}): ${code}`);
-  console.log(`======================================================\n`);
+  // Log to console in non-production environments
+  if (process.env.NODE_ENV !== 'production') {
+    console.log(`\n======================================================`);
+    console.log(`[EMAIL OTP for ${email}] (${purpose}): ${code}`);
+    console.log(`======================================================\n`);
+  }
 
   if (env.SMTP_EMAIL && env.SMTP_APP_PASSWORD) {
     try {

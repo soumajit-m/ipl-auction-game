@@ -26,9 +26,7 @@ export async function POST(req: Request) {
       pin += chars.charAt(Math.floor(Math.random() * chars.length));
     }
 
-    const fixedPath = path.resolve(process.cwd(), 'public/data/players_active_fixed.json');
-    const fallbackPath = path.resolve(process.cwd(), 'public/data/players_active.json');
-    const playersPath = fs.existsSync(fixedPath) ? fixedPath : fallbackPath;
+    const playersPath = path.resolve(process.cwd(), 'public/data/players_active.json');
     let players = JSON.parse(fs.readFileSync(playersPath, 'utf-8'));
 
     // Filter lot pool by minimum OVR if host configured slider (60 to 75)

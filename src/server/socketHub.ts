@@ -20,11 +20,13 @@ import {
   Playing11Lineup,
   SeasonState
 } from '../types/match.types';
-import { AuctionBidderAI, DEFAULT_IPL_FRANCHISES, getNextBidIncrement, getAcceleratedBasePrice } from './auction/bidderAI';
+import { AuctionBidderAI, DEFAULT_IPL_FRANCHISES, getAcceleratedBasePrice } from './auction/bidderAI';
 import { TeamMaker, validate352Lineup } from './match/teamMaker';
 import { FullMatchSimulator, Team2026 } from './match/fullMatchSimulator';
 import { GameRoom } from '../lib/mongodb';
 import { env } from '../lib/env';
+import { verifyHostToken } from '../lib/auth';
+import { getHumanMinPurseReserve, getNextBidIncrement } from '../types/auction.types';
 
 export interface RoomSeat {
   teamId: string;
@@ -83,17 +85,7 @@ export interface InternalRoomState {
   aiBidTimeouts: NodeJS.Timeout[];
 }
 
-/**
- * Exact Human Purse Reservation Rule (FIX 5):
- * 6 slots @ 0.50 Cr + 12 slots @ 0.30 Cr = 6.60 Cr max reserve to guarantee legal 18-man squad
- */
-export function getHumanMinPurseReserve(currentSquadCount: number): number {
-  if (currentSquadCount >= 18) return 0.00;
-  if (currentSquadCount <= 12) {
-    return Number((6.60 - currentSquadCount * 0.30).toFixed(2));
-  }
-  return Number(((18 - currentSquadCount) * 0.50).toFixed(2));
-}
+export { getHumanMinPurseReserve };
 
 export class SocketHub {
   private io: SocketIOServer;
@@ -324,7 +316,7 @@ export class SocketHub {
     // 1. JOIN ROOM & SEAT BINDING
     // ==========================================
     socket.on('join_room', async (data: { roomCode: string; playerName?: string; deviceUUID?: string; isHost?: boolean; token?: string }) => {
-      const { roomCode, playerName, deviceUUID = 'uuid_default', isHost = false } = data;
+      const { roomCode, playerName, deviceUUID = 'uuid_default', isHost: requestedHost = false, token } = data;
       let room = this.getRoom(roomCode);
       if (!room && roomCode) {
         room = (await this.restoreRoomFromDB(roomCode.toUpperCase().trim())) || undefined;
@@ -347,7 +339,21 @@ export class SocketHub {
       socket.data.ipHash = ipHash;
       socket.data.deviceUUID = deviceUUID;
 
-      if (isHost) {
+      // Cryptographically verify host token before conferring host privileges
+      let verifiedHost = false;
+      if (requestedHost) {
+        if (token) {
+          const payload = verifyHostToken(token);
+          if (payload && (payload.hostId === room.hostId || !room.seats.some(s => s.isHuman))) {
+            verifiedHost = true;
+          }
+        } else if (!room.seats.some(s => s.isHuman) && !room.hostSocketId) {
+          // AI-only sandbox room auto-binds first connecting client as host
+          verifiedHost = true;
+        }
+      }
+
+      if (verifiedHost) {
         socket.data.isHost = true;
         room.hostSocketId = socket.id;
         if (room.status === 'SEASON' && !room.seasonClockInterval) {
@@ -526,8 +532,15 @@ export class SocketHub {
     // ==========================================
     socket.on('place_bid', (data: { lotId: string; expectedPrice: number; bidAmount: number; roomCode?: string }) => {
       const room = this.getRoom(data?.roomCode || socket.data.roomCode);
-      const teamId = socket.data.teamId || (room?.seats.find(s => s.socketId === socket.id)?.teamId) || Object.values(room?.teams || {}).find(t => t.isHuman)?.franchiseId;
-      if (!room || !teamId || room.status !== 'AUCTION' || room.isPaused) return;
+      if (!room || room.status !== 'AUCTION' || room.isPaused) return;
+
+      // Impersonation Guard: Strictly verify that the socket holds an active human seat
+      const seat = room.seats.find(s => s.socketId === socket.id && s.isHuman);
+      const teamId = socket.data.teamId || seat?.teamId;
+      if (!teamId || !seat || seat.teamId !== teamId) {
+        socket.emit('bid_rejected', { reason: 'Unauthorized: You do not hold an active franchise seat.' });
+        return;
+      }
 
       const lot = room.currentLot;
       if (!lot || lot.lotId !== data.lotId || lot.state !== 'OPEN') return;
@@ -553,8 +566,7 @@ export class SocketHub {
       const team = room.teams[teamId];
       if (!team) return;
 
-      // FIX 5: Human Bids are NEVER subject to AI Valuation Ceilings
-      // Constrained strictly by squad capacity, overseas cap, and the 6.60 Cr squad reserve rule
+      // Human Bids constrained strictly by squad capacity, overseas cap, and solvency rules
       const squadCount = team.squad.length;
       if (squadCount >= 25) {
         socket.emit('bid_rejected', { reason: 'Squad is full (maximum 25 players).' });
@@ -572,8 +584,25 @@ export class SocketHub {
       // Dynamic Bid Increment Formula: min((2 ** floor(current_bid / 5)) * 0.25, 1.0) Cr
       const inc = lot.currentBidder ? getNextBidIncrement(lot.currentPrice) : 0.0;
       const expectedNext = Math.round((lot.currentPrice + inc) * 100) / 100;
-      const nextPrice = (data.bidAmount && data.bidAmount > lot.currentPrice) ? data.bidAmount : expectedNext;
-      const minReserve = getHumanMinPurseReserve(squadCount);
+
+      // Reject arbitrary or illegal bid jumps
+      if (data.bidAmount && Math.abs(data.bidAmount - expectedNext) > 0.01) {
+        socket.emit('bid_rejected', {
+          reason: `Invalid bid amount: ₹${data.bidAmount.toFixed(2)} Cr. Next legal increment is ₹${expectedNext.toFixed(2)} Cr.`
+        });
+        return;
+      }
+      const nextPrice = expectedNext;
+
+      // Single-Player Hard Ceiling: ₹26.50 Cr
+      if (nextPrice > 26.50) {
+        socket.emit('bid_rejected', { reason: 'Bid exceeds the ₹26.50 Cr single-player hard ceiling.' });
+        return;
+      }
+
+      // Solvency Hard-Clamp: MaxAffordable = PurseRemaining - (0.40 * SlotsNeededTo18)
+      const slotsNeeded = Math.max(0, 18 - (squadCount + 1));
+      const minReserve = Math.max(getHumanMinPurseReserve(squadCount), Number((slotsNeeded * 0.40).toFixed(2)));
       const maxAllowedBid = Number((team.purse - minReserve).toFixed(2));
 
       if (nextPrice > maxAllowedBid) {
@@ -779,10 +808,8 @@ export class SocketHub {
       if (!room) return;
 
       const isHost = Boolean(
-        socket.data.isHost ||
-        (data?.hostId && data.hostId === room.hostId) ||
-        socket.id === room.hostSocketId ||
-        !room.seats.some(s => s.isHuman)
+        (socket.data.isHost && (socket.id === room.hostSocketId || !room.seats.some(s => s.isHuman))) ||
+        (!room.seats.some(s => s.isHuman) && !room.hostSocketId)
       );
 
       // Privileged host-only commands require verified host rights
@@ -972,10 +999,8 @@ export class SocketHub {
       if (!room || !room.season || room.status !== 'SEASON') return;
 
       const isHost = Boolean(
-        socket.data.isHost ||
-        (data?.hostId && data.hostId === room.hostId) ||
-        socket.id === room.hostSocketId ||
-        !room.seats.some(s => s.isHuman)
+        (socket.data.isHost && (socket.id === room.hostSocketId || !room.seats.some(s => s.isHuman))) ||
+        (!room.seats.some(s => s.isHuman) && !room.hostSocketId)
       );
 
       await this.handleSimulateVote(room, socket, socket.data.teamId, isHost);
@@ -987,10 +1012,8 @@ export class SocketHub {
       if (!room || !room.season || room.status !== 'SEASON') return;
 
       const isHost = Boolean(
-        socket.data.isHost ||
-        (data?.hostId && data.hostId === room.hostId) ||
-        socket.id === room.hostSocketId ||
-        !room.seats.some(s => s.isHuman)
+        (socket.data.isHost && (socket.id === room.hostSocketId || !room.seats.some(s => s.isHuman))) ||
+        (!room.seats.some(s => s.isHuman) && !room.hostSocketId)
       );
 
       await this.handleSimulateVote(room, socket, socket.data.teamId, isHost);
@@ -1002,10 +1025,8 @@ export class SocketHub {
       if (!room || !room.season || room.status !== 'SEASON') return;
 
       const isHost = Boolean(
-        socket.data.isHost ||
-        (data?.hostId && data.hostId === room.hostId) ||
-        socket.id === room.hostSocketId ||
-        !room.seats.some(s => s.isHuman)
+        (socket.data.isHost && (socket.id === room.hostSocketId || !room.seats.some(s => s.isHuman))) ||
+        (!room.seats.some(s => s.isHuman) && !room.hostSocketId)
       );
 
       if (isHost) {
@@ -1021,9 +1042,8 @@ export class SocketHub {
       if (!room || !room.season || room.status !== 'SEASON') return;
 
       const isHost = Boolean(
-        socket.data.isHost ||
-        socket.id === room.hostSocketId ||
-        !room.seats.some(s => s.isHuman)
+        (socket.data.isHost && (socket.id === room.hostSocketId || !room.seats.some(s => s.isHuman))) ||
+        (!room.seats.some(s => s.isHuman) && !room.hostSocketId)
       );
 
       await this.handleSimulateVote(room, socket, socket.data.teamId, isHost);
@@ -1135,18 +1155,11 @@ export class SocketHub {
       await this.resolveEntireCurrentSetSilently(room);
     });
 
-    socket.on('debug:skip_auction', (data?: { roomCode?: string }) => {
-      const targetRoomCode = data?.roomCode || socket.data.roomCode;
-      const room = this.rooms.get(targetRoomCode);
-      if (!room) return;
-      this.completeAuctionAndSkipToSeason(room);
-    });
-
     // ==========================================
     // 7.6. ROOM RECONNECT & MID-AUCTION STATE RE-SYNC (Fix 6)
     // ==========================================
-    socket.on('room:join_or_sync', async (data: { roomCode: string; deviceUUID?: string; isHost?: boolean; hostId?: string }) => {
-      const { roomCode, deviceUUID, isHost, hostId } = data;
+    socket.on('room:join_or_sync', async (data: { roomCode: string; deviceUUID?: string; isHost?: boolean; token?: string }) => {
+      const { roomCode, deviceUUID, isHost: requestedHost, token } = data;
       let room = this.getRoom(roomCode);
       if (!room && roomCode) {
         room = (await this.restoreRoomFromDB(roomCode.toUpperCase().trim())) || undefined;
@@ -1166,7 +1179,19 @@ export class SocketHub {
       socket.join(cleanCode.toLowerCase());
       socket.data.roomCode = cleanCode;
 
-      if (isHost || (hostId && hostId === room.hostId) || socket.id === room.hostSocketId || !room.seats.some(s => s.isHuman)) {
+      let verifiedHost = false;
+      if (requestedHost && token) {
+        const payload = verifyHostToken(token);
+        if (payload && (payload.hostId === room.hostId || !room.seats.some(s => s.isHuman))) {
+          verifiedHost = true;
+        }
+      } else if (socket.id === room.hostSocketId && socket.data.isHost) {
+        verifiedHost = true;
+      } else if (!room.seats.some(s => s.isHuman) && !room.hostSocketId) {
+        verifiedHost = true;
+      }
+
+      if (verifiedHost) {
         socket.data.isHost = true;
         room.hostSocketId = socket.id;
       }
@@ -1313,6 +1338,22 @@ export class SocketHub {
   // ==========================================
   // STATE MACHINE & TIMERS
   // ==========================================
+
+  public clearAllRoomTimers(room: InternalRoomState) {
+    if (room.wishlistClockInterval) {
+      clearInterval(room.wishlistClockInterval);
+      room.wishlistClockInterval = null;
+    }
+    if (room.lotClockInterval) {
+      clearInterval(room.lotClockInterval);
+      room.lotClockInterval = null;
+    }
+    if (room.seasonClockInterval) {
+      clearInterval(room.seasonClockInterval);
+      room.seasonClockInterval = null;
+    }
+    this.clearAIBidTimeouts(room);
+  }
 
   public startWishlistClock(room: InternalRoomState) {
     if (room.wishlistClockInterval) clearInterval(room.wishlistClockInterval);
@@ -2798,6 +2839,7 @@ export class SocketHub {
         const champTeam = room.teams[champId];
         room.season.championTeamId = champId;
         this.pushCommentary(room, `🏆🎉 ${champTeam?.name || 'Champion'} ARE THE IPL 2026 CHAMPIONS! 🏆🎉`);
+        this.clearAllRoomTimers(room);
       }
 
       const nextFixture = room.season.fixtures[room.season.currentMatchIndex];

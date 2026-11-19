@@ -28,19 +28,7 @@ import {
   X,
   LogOut
 } from 'lucide-react';
-
-function getDynamicBidIncrement(currentBid: number): number {
-  const steps = Math.floor(Math.max(0, currentBid) / 5.0);
-  return Math.min(Math.pow(2, steps) * 0.25, 1.00);
-}
-
-function getHumanMinPurseReserve(currentSquadCount: number): number {
-  if (currentSquadCount >= 18) return 0.00;
-  if (currentSquadCount <= 12) {
-    return Number((6.60 - currentSquadCount * 0.30).toFixed(2));
-  }
-  return Number(((18 - currentSquadCount) * 0.50).toFixed(2));
-}
+import { getNextBidIncrement as getDynamicBidIncrement, getHumanMinPurseReserve } from '@/types/auction.types';
 
 export default function AuctionArenaPage() {
   const router = useRouter();

@@ -112,3 +112,24 @@ export interface SanitizeRoomDTO {
   auctionSpeedMultiplier?: number;
   hostId?: string;
 }
+
+/**
+ * Dynamic Bid Increment Formula:
+ * min((2 ** floor(current_bid / 5)) * 0.25, 1.0) Cr
+ */
+export function getNextBidIncrement(currentBid: number): number {
+  const steps = Math.floor(Math.max(0, currentBid) / 5.0);
+  return Math.min(Math.pow(2, steps) * 0.25, 1.00);
+}
+
+/**
+ * Exact Human Purse Reservation Rule:
+ * 6 slots @ 0.50 Cr + 12 slots @ 0.30 Cr = 6.60 Cr max reserve to guarantee legal 18-man squad
+ */
+export function getHumanMinPurseReserve(currentSquadCount: number): number {
+  if (currentSquadCount >= 18) return 0.00;
+  if (currentSquadCount <= 12) {
+    return Number((6.60 - currentSquadCount * 0.30).toFixed(2));
+  }
+  return Number(((18 - currentSquadCount) * 0.50).toFixed(2));
+}
