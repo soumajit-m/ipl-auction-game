@@ -29,10 +29,8 @@ async function bootstrap() {
     // 1. Connect to MongoDB
     await connectToDatabase();
 
-    // 2. Load Active Players Dataset (prioritizing cleaned & verified players_active_fixed.json)
-    const fixedPath = path.resolve(process.cwd(), 'public/data/players_active_fixed.json');
-    const fallbackPath = path.resolve(process.cwd(), 'public/data/players_active.json');
-    const playersPath = fs.existsSync(fixedPath) ? fixedPath : fallbackPath;
+    // 2. Load Active Players Dataset
+    const playersPath = path.resolve(process.cwd(), 'public/data/players_active.json');
     let allPlayers: IPLPlayer[] = [];
     if (fs.existsSync(playersPath)) {
       allPlayers = JSON.parse(fs.readFileSync(playersPath, 'utf-8'));
