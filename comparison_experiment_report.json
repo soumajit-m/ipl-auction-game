@@ -1,0 +1,477 @@
+{
+  "isolated": {
+    "v2": {
+      "engineName": "ISO_V2_ANALYTICAL",
+      "totalPurseSpentAvg": 124.59,
+      "remPurseAvg": 0.41,
+      "squadSizeAvg": 19.9,
+      "superstarAvgPrice": 15.67,
+      "superstarsCount": 52,
+      "coreAvgPrice": 6.95,
+      "coresCount": 36,
+      "valueAvgPrice": 1.63,
+      "valuesCount": 111,
+      "unsoldCount": 365,
+      "avgSquadOVR": 80.24,
+      "avgPlayingXIOVR": 86.07,
+      "teamStats": [
+        {
+          "id": "CSK",
+          "name": "Chennai Super Kings",
+          "spent": 124.7,
+          "rem": 0.3,
+          "squadCount": 20,
+          "xiOvr": 88.1,
+          "superstars": 6
+        },
+        {
+          "id": "MI",
+          "name": "Mumbai Indians",
+          "spent": 124.2,
+          "rem": 0.8,
+          "squadCount": 20,
+          "xiOvr": 84.7,
+          "superstars": 3
+        },
+        {
+          "id": "KKR",
+          "name": "Kolkata Knight Riders",
+          "spent": 124.2,
+          "rem": 0.8,
+          "squadCount": 22,
+          "xiOvr": 89.3,
+          "superstars": 7
+        },
+        {
+          "id": "RCB",
+          "name": "Royal Challengers Bengaluru",
+          "spent": 124.8,
+          "rem": 0.2,
+          "squadCount": 20,
+          "xiOvr": 86.3,
+          "superstars": 6
+        },
+        {
+          "id": "RR",
+          "name": "Rajasthan Royals",
+          "spent": 124.9,
+          "rem": 0.1,
+          "squadCount": 18,
+          "xiOvr": 82.7,
+          "superstars": 2
+        },
+        {
+          "id": "SRH",
+          "name": "Sunrisers Hyderabad",
+          "spent": 124.45,
+          "rem": 0.55,
+          "squadCount": 19,
+          "xiOvr": 86.2,
+          "superstars": 6
+        },
+        {
+          "id": "DC",
+          "name": "Delhi Capitals",
+          "spent": 124.95,
+          "rem": 0.05,
+          "squadCount": 19,
+          "xiOvr": 84.7,
+          "superstars": 6
+        },
+        {
+          "id": "PBKS",
+          "name": "Punjab Kings",
+          "spent": 124.7,
+          "rem": 0.3,
+          "squadCount": 20,
+          "xiOvr": 86.2,
+          "superstars": 5
+        },
+        {
+          "id": "GT",
+          "name": "Gujarat Titans",
+          "spent": 124.7,
+          "rem": 0.3,
+          "squadCount": 20,
+          "xiOvr": 85.9,
+          "superstars": 5
+        },
+        {
+          "id": "LSG",
+          "name": "Lucknow Super Giants",
+          "spent": 124.25,
+          "rem": 0.75,
+          "squadCount": 21,
+          "xiOvr": 86.6,
+          "superstars": 6
+        }
+      ]
+    },
+    "untuned": {
+      "engineName": "ISO_V3_UNTUNED",
+      "totalPurseSpentAvg": 124.89,
+      "remPurseAvg": 0.11,
+      "squadSizeAvg": 18.8,
+      "superstarAvgPrice": 15.81,
+      "superstarsCount": 54,
+      "coreAvgPrice": 7.22,
+      "coresCount": 31,
+      "valueAvgPrice": 1.66,
+      "valuesCount": 103,
+      "unsoldCount": 376,
+      "avgSquadOVR": 80.7,
+      "avgPlayingXIOVR": 86.29,
+      "teamStats": [
+        {
+          "id": "CSK",
+          "name": "Chennai Super Kings",
+          "spent": 124.85,
+          "rem": 0.15,
+          "squadCount": 19,
+          "xiOvr": 87.8,
+          "superstars": 5
+        },
+        {
+          "id": "MI",
+          "name": "Mumbai Indians",
+          "spent": 124.9,
+          "rem": 0.1,
+          "squadCount": 19,
+          "xiOvr": 82.3,
+          "superstars": 6
+        },
+        {
+          "id": "KKR",
+          "name": "Kolkata Knight Riders",
+          "spent": 124.9,
+          "rem": 0.1,
+          "squadCount": 19,
+          "xiOvr": 88.7,
+          "superstars": 6
+        },
+        {
+          "id": "RCB",
+          "name": "Royal Challengers Bengaluru",
+          "spent": 124.95,
+          "rem": 0.05,
+          "squadCount": 19,
+          "xiOvr": 84.6,
+          "superstars": 6
+        },
+        {
+          "id": "RR",
+          "name": "Rajasthan Royals",
+          "spent": 124.75,
+          "rem": 0.25,
+          "squadCount": 19,
+          "xiOvr": 85.5,
+          "superstars": 3
+        },
+        {
+          "id": "SRH",
+          "name": "Sunrisers Hyderabad",
+          "spent": 124.75,
+          "rem": 0.25,
+          "squadCount": 18,
+          "xiOvr": 87.4,
+          "superstars": 5
+        },
+        {
+          "id": "DC",
+          "name": "Delhi Capitals",
+          "spent": 124.95,
+          "rem": 0.05,
+          "squadCount": 19,
+          "xiOvr": 87.6,
+          "superstars": 6
+        },
+        {
+          "id": "PBKS",
+          "name": "Punjab Kings",
+          "spent": 125,
+          "rem": 0,
+          "squadCount": 19,
+          "xiOvr": 86.6,
+          "superstars": 7
+        },
+        {
+          "id": "GT",
+          "name": "Gujarat Titans",
+          "spent": 124.85,
+          "rem": 0.15,
+          "squadCount": 19,
+          "xiOvr": 86.6,
+          "superstars": 6
+        },
+        {
+          "id": "LSG",
+          "name": "Lucknow Super Giants",
+          "spent": 125,
+          "rem": 0,
+          "squadCount": 18,
+          "xiOvr": 85.6,
+          "superstars": 4
+        }
+      ]
+    },
+    "tuned": {
+      "engineName": "ISO_V3_TUNED",
+      "totalPurseSpentAvg": 124.02,
+      "remPurseAvg": 0.98,
+      "squadSizeAvg": 20.7,
+      "superstarAvgPrice": 14.94,
+      "superstarsCount": 54,
+      "coreAvgPrice": 5.99,
+      "coresCount": 41,
+      "valueAvgPrice": 1.68,
+      "valuesCount": 112,
+      "unsoldCount": 357,
+      "avgSquadOVR": 80.52,
+      "avgPlayingXIOVR": 85.65,
+      "teamStats": [
+        {
+          "id": "CSK",
+          "name": "Chennai Super Kings",
+          "spent": 123.45,
+          "rem": 1.55,
+          "squadCount": 19,
+          "xiOvr": 84,
+          "superstars": 6
+        },
+        {
+          "id": "MI",
+          "name": "Mumbai Indians",
+          "spent": 123.8,
+          "rem": 1.2,
+          "squadCount": 21,
+          "xiOvr": 84.2,
+          "superstars": 3
+        },
+        {
+          "id": "KKR",
+          "name": "Kolkata Knight Riders",
+          "spent": 125,
+          "rem": 0,
+          "squadCount": 21,
+          "xiOvr": 84.8,
+          "superstars": 6
+        },
+        {
+          "id": "RCB",
+          "name": "Royal Challengers Bengaluru",
+          "spent": 122.8,
+          "rem": 2.2,
+          "squadCount": 22,
+          "xiOvr": 83.7,
+          "superstars": 5
+        },
+        {
+          "id": "RR",
+          "name": "Rajasthan Royals",
+          "spent": 124.6,
+          "rem": 0.4,
+          "squadCount": 22,
+          "xiOvr": 86,
+          "superstars": 3
+        },
+        {
+          "id": "SRH",
+          "name": "Sunrisers Hyderabad",
+          "spent": 123.75,
+          "rem": 1.25,
+          "squadCount": 20,
+          "xiOvr": 87.9,
+          "superstars": 6
+        },
+        {
+          "id": "DC",
+          "name": "Delhi Capitals",
+          "spent": 124,
+          "rem": 1,
+          "squadCount": 21,
+          "xiOvr": 85.5,
+          "superstars": 6
+        },
+        {
+          "id": "PBKS",
+          "name": "Punjab Kings",
+          "spent": 124,
+          "rem": 1,
+          "squadCount": 20,
+          "xiOvr": 86.3,
+          "superstars": 6
+        },
+        {
+          "id": "GT",
+          "name": "Gujarat Titans",
+          "spent": 124.05,
+          "rem": 0.95,
+          "squadCount": 19,
+          "xiOvr": 88.5,
+          "superstars": 7
+        },
+        {
+          "id": "LSG",
+          "name": "Lucknow Super Giants",
+          "spent": 124.75,
+          "rem": 0.25,
+          "squadCount": 22,
+          "xiOvr": 85.5,
+          "superstars": 6
+        }
+      ]
+    }
+  },
+  "mixed": {
+    "auctionStats": {
+      "engineName": "MIXED_BATTLE_ROYALE",
+      "totalPurseSpentAvg": 124.66,
+      "remPurseAvg": 0.35,
+      "squadSizeAvg": 19.7,
+      "superstarAvgPrice": 15.59,
+      "superstarsCount": 54,
+      "coreAvgPrice": 7.52,
+      "coresCount": 31,
+      "valueAvgPrice": 1.53,
+      "valuesCount": 112,
+      "unsoldCount": 367,
+      "avgSquadOVR": 80.28,
+      "avgPlayingXIOVR": 86.21,
+      "teamStats": [
+        {
+          "id": "CSK",
+          "name": "Chennai Super Kings",
+          "spent": 124.85,
+          "rem": 0.15,
+          "squadCount": 19,
+          "xiOvr": 85.6,
+          "superstars": 5
+        },
+        {
+          "id": "MI",
+          "name": "Mumbai Indians",
+          "spent": 125,
+          "rem": 0,
+          "squadCount": 21,
+          "xiOvr": 83.5,
+          "superstars": 3
+        },
+        {
+          "id": "KKR",
+          "name": "Kolkata Knight Riders",
+          "spent": 124.3,
+          "rem": 0.7,
+          "squadCount": 19,
+          "xiOvr": 88.6,
+          "superstars": 6
+        },
+        {
+          "id": "RCB",
+          "name": "Royal Challengers Bengaluru",
+          "spent": 124.65,
+          "rem": 0.35,
+          "squadCount": 20,
+          "xiOvr": 89.3,
+          "superstars": 6
+        },
+        {
+          "id": "RR",
+          "name": "Rajasthan Royals",
+          "spent": 124.5,
+          "rem": 0.5,
+          "squadCount": 22,
+          "xiOvr": 85.6,
+          "superstars": 4
+        },
+        {
+          "id": "SRH",
+          "name": "Sunrisers Hyderabad",
+          "spent": 124.85,
+          "rem": 0.15,
+          "squadCount": 19,
+          "xiOvr": 86.1,
+          "superstars": 6
+        },
+        {
+          "id": "DC",
+          "name": "Delhi Capitals",
+          "spent": 124.9,
+          "rem": 0.1,
+          "squadCount": 19,
+          "xiOvr": 86.7,
+          "superstars": 7
+        },
+        {
+          "id": "PBKS",
+          "name": "Punjab Kings",
+          "spent": 124.2,
+          "rem": 0.8,
+          "squadCount": 19,
+          "xiOvr": 85.6,
+          "superstars": 7
+        },
+        {
+          "id": "GT",
+          "name": "Gujarat Titans",
+          "spent": 124.55,
+          "rem": 0.45,
+          "squadCount": 18,
+          "xiOvr": 85.9,
+          "superstars": 6
+        },
+        {
+          "id": "LSG",
+          "name": "Lucknow Super Giants",
+          "spent": 124.75,
+          "rem": 0.25,
+          "squadCount": 21,
+          "xiOvr": 85.1,
+          "superstars": 4
+        }
+      ]
+    },
+    "matchResults": {
+      "wins": {
+        "CSK": 9,
+        "MI": 7,
+        "KKR": 12,
+        "RCB": 10,
+        "RR": 7,
+        "SRH": 17,
+        "DC": 10,
+        "PBKS": 6,
+        "GT": 13,
+        "LSG": 9
+      },
+      "played": {
+        "CSK": 18,
+        "MI": 16,
+        "KKR": 20,
+        "RCB": 19,
+        "RR": 16,
+        "SRH": 27,
+        "DC": 20,
+        "PBKS": 18,
+        "GT": 21,
+        "LSG": 25
+      },
+      "winRates": {
+        "CSK": 50,
+        "MI": 43.8,
+        "KKR": 60,
+        "RCB": 52.6,
+        "RR": 43.8,
+        "SRH": 63,
+        "DC": 50,
+        "PBKS": 33.3,
+        "GT": 61.9,
+        "LSG": 36
+      },
+      "groupWinRates": {
+        "V3_TUNED": 52.1,
+        "V3_UNTUNED": 54,
+        "V2_ANALYTICAL": 43.8
+      }
+    }
+  }
+}

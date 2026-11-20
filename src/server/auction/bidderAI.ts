@@ -502,6 +502,7 @@ export function forwardPolicyNet(input18: Float32Array, weights: PolicyWeights):
 
 export class AuctionBidderAI {
   private archetypeWeights: Map<AIArchetype, PolicyWeights> = new Map();
+  public franchiseWeightOverrides: Map<string, PolicyWeights | null> = new Map();
   private precomputedValuations: Map<string, ValuationOutput> = new Map();
   private vIntrinsicMap: Map<string, number> = new Map();
   private vAlphaMap: Map<string, number> = new Map();
@@ -1122,7 +1123,11 @@ export class AuctionBidderAI {
     const policyInput = this.extractPolicyFeatures(player, franchiseId, currentBidCr, leadingFranchiseId);
     let policyOut = { mPolicy: 1.0, pBluff: 0.10, tauSniper: 0.20 };
 
-    const weightsToUse = this.archetypeWeights.get(archetype) || this.archetypeWeights.get('DISCIPLINED_PRAGMATIST');
+    let weightsToUse = this.archetypeWeights.get(archetype) || this.archetypeWeights.get('DISCIPLINED_PRAGMATIST');
+    if (this.franchiseWeightOverrides.has(franchiseId)) {
+      const override = this.franchiseWeightOverrides.get(franchiseId);
+      weightsToUse = override === null ? undefined : override;
+    }
     if (weightsToUse) {
       policyOut = forwardPolicyNet(policyInput, weightsToUse);
     }
