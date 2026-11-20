@@ -143,4 +143,5 @@ export interface SeasonState {
   humanMatchWaitingForNext: boolean;
   championTeamId?: string | null;
   matchLifecycle?: MatchLifecycleState;
+  simAlpha?: number;               // [0.5..1.5] Simulation Alpha: scales batting SR by alpha, bowling Econ by (2 - alpha)
 }

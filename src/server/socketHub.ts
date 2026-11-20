@@ -23,6 +23,7 @@ import {
 import { AuctionBidderAI, DEFAULT_IPL_FRANCHISES, getAcceleratedBasePrice } from './auction/bidderAI';
 import { TeamMaker, validate352Lineup } from './match/teamMaker';
 import { FullMatchSimulator, Team2026 } from './match/fullMatchSimulator';
+import { processMatchWorkload, signInjuryReplacement } from './match/injuryEngine';
 import { GameRoom } from '../lib/mongodb';
 import { env } from '../lib/env';
 import { verifyHostToken } from '../lib/auth';
@@ -77,6 +78,7 @@ export interface InternalRoomState {
   setSkipVotes?: Set<string>;
   lastSetSummary?: string | null;
   speedMultiplier: number;
+  simAlpha?: number;
   isAdvancingMatch?: boolean;
   // Internal clock interval references
   lotClockInterval?: NodeJS.Timeout | null;
@@ -799,7 +801,7 @@ export class SocketHub {
     // ==========================================
     // 6. HOST CONTROLS (Force Save, Pause, Replace with AI)
     // ==========================================
-    socket.on('host_action', async (data: { action: 'START_AUCTION' | 'FORCE_SAVE' | 'TOGGLE_PAUSE' | 'TOGGLE_SPEED' | 'REPLACE_HUMAN_WITH_AI' | 'TOGGLE_AUTO_SKIP_AI' | 'NEXT_MATCH' | 'SIMULATE_ALL_MATCHES' | 'FORCE_SIMULATE'; targetTeamId?: string; roomCode?: string; hostId?: string }) => {
+    socket.on('host_action', async (data: { action: 'START_AUCTION' | 'FORCE_SAVE' | 'TOGGLE_PAUSE' | 'TOGGLE_SPEED' | 'REPLACE_HUMAN_WITH_AI' | 'TOGGLE_AUTO_SKIP_AI' | 'NEXT_MATCH' | 'SIMULATE_ALL_MATCHES' | 'FORCE_SIMULATE' | 'SET_SIM_ALPHA'; targetTeamId?: string; alpha?: number; roomCode?: string; hostId?: string }) => {
       const rawCode = data?.roomCode || socket.data.roomCode;
       let room = this.getRoom(rawCode);
       if (!room && rawCode) {
@@ -986,10 +988,33 @@ export class SocketHub {
             }
           }
           break;
+
+        case 'SET_SIM_ALPHA':
+          if ((data as any)?.alpha !== undefined) {
+            const alphaVal = Math.max(0.5, Math.min(1.5, Number((data as any).alpha)));
+            if (room.season) room.season.simAlpha = alphaVal;
+            room.simAlpha = alphaVal;
+            room.isDirty = true;
+            this.broadcastRoomState(room.roomCode);
+          }
+          break;
       }
 
       room.isDirty = true;
       this.broadcastRoomState(room.roomCode);
+    });
+
+    socket.on('set_sim_alpha', async (data?: { alpha?: number; roomCode?: string }) => {
+      const targetRoomCode = data?.roomCode || socket.data.roomCode;
+      const room = this.rooms.get(targetRoomCode);
+      if (!room) return;
+      if (data?.alpha !== undefined) {
+        const alphaVal = Math.max(0.5, Math.min(1.5, Number(data.alpha)));
+        if (room.season) room.season.simAlpha = alphaVal;
+        room.simAlpha = alphaVal;
+        room.isDirty = true;
+        this.broadcastRoomState(room.roomCode);
+      }
     });
 
     // Direct simulate_match socket handler
@@ -2177,8 +2202,12 @@ export class SocketHub {
         bowlers = t.squad.filter(p => TeamMaker.isBowler(p));
       }
 
-      // Guard 3: Guarantee bowling capacity
+      // Guard 3: Guarantee bowling capacity and reset physical workload & injury status
       TeamMaker.ensureSquadBowlingCapacity(t.squad);
+      for (const p of t.squad) {
+        p.workload = 0.0;
+        p.injuryStatus = 0;
+      }
     }
 
     for (const [tId, t] of Object.entries(room.teams)) {
@@ -2445,6 +2474,7 @@ export class SocketHub {
       lineups,
       autoSkipAI: true,
       humanMatchWaitingForNext: false,
+      simAlpha: room.simAlpha ?? 0.8,
       matchLifecycle: {
         stage: 'PRE_MATCH_PREP',
         prepTimerMsRemaining: isFirstHuman ? 0 : 15000,
@@ -2772,6 +2802,7 @@ export class SocketHub {
       if (room.determinismRatio !== undefined) {
         this.matchSimulator.setHostRandomnessScale(room.determinismRatio);
       }
+      this.matchSimulator.setSimAlpha(room.season?.simAlpha ?? room.simAlpha ?? 0.8);
       const result = await this.matchSimulator.simulateFullMatch(fixture.matchNumber, simTeamA, simTeamB);
       result.isPlayoff = fixture.isPlayoff;
       result.playoffStage = fixture.playoffStage;
@@ -2830,6 +2861,79 @@ export class SocketHub {
             sB.recentForm.push('T');
           }
         }
+      }
+
+      // =========================================================================
+      // TOURNAMENT WORKLOAD & 3-TIER INJURY PROCESSING
+      // =========================================================================
+      try {
+        const activeIdsA = new Set(xiA.map(p => p.id));
+        const activeIdsB = new Set(xiB.map(p => p.id));
+
+        const allAssignedIds = new Set<string>();
+        for (const t of Object.values(room.teams)) {
+          for (const p of t.squad) allAssignedIds.add(p.id);
+        }
+        const unsoldPool = (room.allPlayers || []).filter(p => !allAssignedIds.has(p.id));
+
+        const resWorkloadA = processMatchWorkload(teamA.squad, activeIdsA, teamA.franchiseId);
+        const resWorkloadB = processMatchWorkload(teamB.squad, activeIdsB, teamB.franchiseId);
+
+        // Process team A injuries & replacements
+        for (const inj of resWorkloadA.injuredPlayers) {
+          if (inj.level === 'LEVEL_3_RULED_OUT') {
+            const rep = signInjuryReplacement(teamA.squad, inj.playerId, unsoldPool);
+            if (rep.success && rep.replacementPlayer) {
+              this.pushCommentary(room, `🚑 INJURY UPDATE: ${inj.playerName} (${teamA.name}) is ruled out for the tournament. Replacement signed: ${rep.replacementPlayer.name} (${rep.replacementPlayer.role})!`);
+            } else {
+              this.pushCommentary(room, `🚑 INJURY UPDATE: ${inj.playerName} (${teamA.name}) is ruled out for the tournament.`);
+            }
+          } else if (inj.level === 'LEVEL_2_STRAIN') {
+            this.pushCommentary(room, `🩹 INJURY: ${inj.playerName} (${teamA.name}) suffered a muscle strain and will miss 3 matches.`);
+          } else if (inj.level === 'LEVEL_1_NIGGLE') {
+            this.pushCommentary(room, `⚠️ NIGGLE: ${inj.playerName} (${teamA.name}) experienced soreness and will rest 1 match.`);
+          }
+        }
+        for (const recId of resWorkloadA.recoveredPlayers) {
+          const recP = teamA.squad.find(p => p.id === recId);
+          if (recP) {
+            this.pushCommentary(room, `💪 RECOVERY: ${recP.name} (${teamA.name}) has recovered from injury and is fit to play.`);
+          }
+        }
+
+        // Process team B injuries & replacements
+        for (const inj of resWorkloadB.injuredPlayers) {
+          if (inj.level === 'LEVEL_3_RULED_OUT') {
+            const rep = signInjuryReplacement(teamB.squad, inj.playerId, unsoldPool);
+            if (rep.success && rep.replacementPlayer) {
+              this.pushCommentary(room, `🚑 INJURY UPDATE: ${inj.playerName} (${teamB.name}) is ruled out for the tournament. Replacement signed: ${rep.replacementPlayer.name} (${rep.replacementPlayer.role})!`);
+            } else {
+              this.pushCommentary(room, `🚑 INJURY UPDATE: ${inj.playerName} (${teamB.name}) is ruled out for the tournament.`);
+            }
+          } else if (inj.level === 'LEVEL_2_STRAIN') {
+            this.pushCommentary(room, `🩹 INJURY: ${inj.playerName} (${teamB.name}) suffered a muscle strain and will miss 3 matches.`);
+          } else if (inj.level === 'LEVEL_1_NIGGLE') {
+            this.pushCommentary(room, `⚠️ NIGGLE: ${inj.playerName} (${teamB.name}) experienced soreness and will rest 1 match.`);
+          }
+        }
+        for (const recId of resWorkloadB.recoveredPlayers) {
+          const recP = teamB.squad.find(p => p.id === recId);
+          if (recP) {
+            this.pushCommentary(room, `💪 RECOVERY: ${recP.name} (${teamB.name}) has recovered from injury and is fit to play.`);
+          }
+        }
+
+        // Auto-refresh lineups for AI teams so injured players are benched
+        const profA = DEFAULT_IPL_FRANCHISES.find(p => p.id === teamA.franchiseId);
+        const profB = DEFAULT_IPL_FRANCHISES.find(p => p.id === teamB.franchiseId);
+        if (!teamA.isHuman) {
+          room.season.lineups[fixture.homeTeamId] = TeamMaker.selectEliteAILineup(teamA.squad, profA?.homePitch, undefined, teamA.franchiseId);
+        }
+        if (!teamB.isHuman) {
+          room.season.lineups[fixture.awayTeamId] = TeamMaker.selectEliteAILineup(teamB.squad, profB?.homePitch, undefined, teamB.franchiseId);
+        }
+      } catch (workloadErr) {
+        console.error('[InjuryEngine] Error in post-match workload processing:', workloadErr);
       }
 
       room.season.currentMatchIndex++;

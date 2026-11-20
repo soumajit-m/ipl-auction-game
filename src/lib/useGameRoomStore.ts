@@ -46,7 +46,8 @@ interface GameRoomStore {
   unskipAndBid: (lotId: string) => void;
   updateLiveFilter: (filterConfig: any) => void;
   toggleManualSkip: (teamId?: string, roomCode?: string) => void;
-  hostAction: (action: 'START_AUCTION' | 'FORCE_SAVE' | 'TOGGLE_PAUSE' | 'TOGGLE_SPEED' | 'REPLACE_HUMAN_WITH_AI' | 'TOGGLE_AUTO_SKIP_AI' | 'NEXT_MATCH' | 'SIMULATE_ALL_MATCHES' | 'FORCE_SIMULATE', targetTeamId?: string) => void;
+  hostAction: (action: 'START_AUCTION' | 'FORCE_SAVE' | 'TOGGLE_PAUSE' | 'TOGGLE_SPEED' | 'REPLACE_HUMAN_WITH_AI' | 'TOGGLE_AUTO_SKIP_AI' | 'NEXT_MATCH' | 'SIMULATE_ALL_MATCHES' | 'FORCE_SIMULATE' | 'SET_SIM_ALPHA', targetTeamId?: any) => void;
+  setSimAlpha: (alpha: number) => void;
   sendMatchReady: () => void;
   simulateMatch: () => void;
   voteSimulate: () => void;
@@ -265,6 +266,17 @@ export const useGameRoomStore = create<GameRoomStore>((set, get) => ({
     }
     if (!socket) return;
     socket.emit('host_action', { action, targetTeamId, roomCode: activeCode });
+  },
+
+  setSimAlpha: (alpha: number) => {
+    const { socket, roomCode, roomState } = get();
+    const activeCode = (roomCode || (typeof window !== 'undefined' ? (new URLSearchParams(window.location.search).get('room') || localStorage.getItem('active_ipl_room_code')) : null) || '').toUpperCase().trim();
+    if (roomState && (roomState as any).season) {
+      set({ roomState: { ...roomState, season: { ...(roomState as any).season, simAlpha: alpha } } as any });
+    }
+    if (!socket) return;
+    socket.emit('set_sim_alpha', { alpha, roomCode: activeCode });
+    socket.emit('host_action', { action: 'SET_SIM_ALPHA', alpha, roomCode: activeCode });
   },
 
   sendMatchReady: () => {

@@ -61,7 +61,8 @@ export default function SeasonHubPage() {
     hostAuth,
     saveStatus,
     updateLineup,
-    leaveRoom
+    leaveRoom,
+    setSimAlpha
   } = useGameRoomStore();
 
   const handleQuitRoom = () => {
@@ -121,6 +122,10 @@ export default function SeasonHubPage() {
   }, [saveStatus]);
 
   const season = (roomState as any)?.season;
+  const simAlpha = typeof season?.simAlpha === 'number' ? season.simAlpha : 0.8;
+  const handleAlphaChange = (newAlpha: number) => {
+    setSimAlpha(newAlpha);
+  };
   const teams = roomState?.teams || {};
 
   // Strict Client-to-Franchise Identity Binding (Bug 1):
@@ -607,9 +612,10 @@ export default function SeasonHubPage() {
   const overseasCount = selectedPlayers.filter(p => p.isOverseas).length;
   const wkCount = selectedPlayers.filter(p => p.role === 'WK').length;
   const bowlerCount = candidateBowlers.length;
+  const injuredInXI = selectedPlayers.filter(p => (p.injuryStatus !== undefined && p.injuryStatus !== 0));
 
   // Stage 1 legality
-  const isStage1Valid = selectedCount === 11 && overseasCount <= 4 && wkCount >= 1 && bowlerCount >= 6;
+  const isStage1Valid = selectedCount === 11 && overseasCount <= 4 && wkCount >= 1 && bowlerCount >= 6 && injuredInXI.length === 0;
 
   // Stage 2 legality
   const isPPValid = ppBowlerIds.length === 3 && ppBowlerIds.includes(firstBowlerId);
@@ -634,6 +640,7 @@ export default function SeasonHubPage() {
       if (overseasCount > 4) blockers.push(`Max 4 overseas allowed (currently ${overseasCount})`);
       if (wkCount < 1) blockers.push('At least 1 qualified Wicketkeeper required');
       if (bowlerCount < 6) blockers.push(`At least 6 bowling-capable players required (currently ${bowlerCount})`);
+      if (injuredInXI.length > 0) blockers.push(`Injured player in Starting 11: ${injuredInXI.map(p => p.name).join(', ')} must be benched`);
     }
     if (ppBowlerIds.length !== 3) blockers.push(`Select exactly 3 Powerplay bowlers (currently ${ppBowlerIds.length})`);
     else if (!ppBowlerIds.includes(firstBowlerId)) blockers.push('Designate an Over 1 Starter from the 3 Powerplay bowlers');
@@ -678,6 +685,7 @@ export default function SeasonHubPage() {
 
   const handleAddPlayer = (player: IPLPlayer) => {
     if (workingXI.length >= 11) return;
+    if (player.injuryStatus !== undefined && player.injuryStatus !== 0) return;
     if (player.isOverseas && overseasCount >= 4) return;
     const nextXI = [...workingXI, player.id];
     setWorkingXI(nextXI);
@@ -764,52 +772,6 @@ export default function SeasonHubPage() {
       setSaveSuccessMsg(`Auto-pick error: ${e?.message || 'Check squad limits'}`);
       setTimeout(() => setSaveSuccessMsg(null), 3500);
     }
-  };
-
-  const getDeathSkillBadge = (player: IPLPlayer) => {
-    const rating = player.tacticalSynergy?.death ?? (player.stats?.bowl ? player.stats.bowl / 100 : 0.3);
-    if (rating >= 0.70) {
-      return (
-        <span className="text-[10px] px-2 py-0.5 rounded font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 whitespace-nowrap">
-          Elite Yorker Specialist
-        </span>
-      );
-    }
-    if (rating >= 0.45) {
-      return (
-        <span className="text-[10px] px-2 py-0.5 rounded font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 whitespace-nowrap">
-          Solid Death Control
-        </span>
-      );
-    }
-    return (
-      <span className="text-[10px] px-2 py-0.5 rounded font-bold bg-rose-500/20 text-rose-400 border border-rose-500/30 whitespace-nowrap">
-        Risky at Death
-      </span>
-    );
-  };
-
-  const getPowerplaySkillBadge = (player: IPLPlayer) => {
-    const rating = player.tacticalSynergy?.powerplay ?? (player.stats?.bowl ? player.stats.bowl / 100 : 0.3);
-    if (rating >= 0.70) {
-      return (
-        <span className="text-[10px] px-2 py-0.5 rounded font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 whitespace-nowrap">
-          Elite Swing Specialist
-        </span>
-      );
-    }
-    if (rating >= 0.45) {
-      return (
-        <span className="text-[10px] px-2 py-0.5 rounded font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 whitespace-nowrap">
-          Solid PP Control
-        </span>
-      );
-    }
-    return (
-      <span className="text-[10px] px-2 py-0.5 rounded font-bold bg-rose-500/20 text-rose-400 border border-rose-500/30 whitespace-nowrap">
-        Risky in Powerplay
-      </span>
-    );
   };
 
   const handleSaveLineup = () => {
@@ -943,6 +905,27 @@ export default function SeasonHubPage() {
               <FastForward className="w-3.5 h-3.5" />
               <span>Auto-Skip AI: {season?.autoSkipAI ? 'ON' : 'OFF'}</span>
             </button>
+
+            {/* Sim Alpha Setting Slider */}
+            <div
+              className="h-9 px-3 rounded-xl bg-surfaceDark border border-white/[0.08] text-xs font-mono font-bold flex items-center gap-2 shadow-sm"
+              title="Simulation Alpha (α): Scales batting SR by α and bowling Economy by (2 - α). Range: 0.50 to 1.50 (Default 0.80)"
+            >
+              <Sliders className="w-3.5 h-3.5 text-amber-400" />
+              <span className="text-slate-400 font-semibold text-[11px] whitespace-nowrap">α Alpha:</span>
+              <span className="text-amber-400 font-mono font-bold text-xs min-w-[2.2rem] text-center">
+                {simAlpha.toFixed(2)}
+              </span>
+              <input
+                type="range"
+                min="0.5"
+                max="1.5"
+                step="0.05"
+                value={simAlpha}
+                onChange={(e) => handleAlphaChange(parseFloat(e.target.value))}
+                className="w-20 accent-amber-400 cursor-pointer h-1.5 bg-slate-700 rounded-lg"
+              />
+            </div>
 
             {!allCompleted && nextFixture && (
               <button
@@ -3030,12 +3013,15 @@ export default function SeasonHubPage() {
                         selectedPlayers.map((p, idx) => (
                           <div key={p.id} className="p-3 rounded-lg bg-canvas border border-borderDark hover:border-slate-600 transition-colors flex items-center justify-between text-xs">
                             <div>
-                              <div className="font-bold text-slate-200 flex items-center gap-1.5">
+                              <div className="font-bold text-slate-200 flex items-center gap-1.5 flex-wrap">
                                 <span className="text-slate-500 font-mono text-[11px]">#{idx + 1}</span>
                                 <span>{p.name}</span>
                                 {p.isOverseas && <span>✈️</span>}
                                 {p.role === 'WK' && <span className="text-[9px] px-1.5 py-0.5 rounded bg-brand-gold/20 text-brand-gold font-bold">WK</span>}
                                 {TeamMaker.isBowler(p) && <span className="text-[9px] px-1.5 py-0.5 rounded bg-brand-emerald/20 text-brand-emerald font-bold">BOWL</span>}
+                                {p.injuryStatus === 1 && <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 font-bold border border-amber-500/30">🩹 Niggle (Out 1M)</span>}
+                                {p.injuryStatus !== undefined && p.injuryStatus > 1 && <span className="text-[9px] px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-400 font-bold border border-rose-500/30">🚑 Strain ({p.injuryStatus}M)</span>}
+                                {p.injuryStatus === -1 && <span className="text-[9px] px-1.5 py-0.5 rounded bg-red-950/70 text-red-400 font-bold border border-red-500/40">❌ Ruled Out</span>}
                               </div>
                               <div className="text-[10px] text-slate-400 font-mono mt-0.5">
                                 {p.role} • OVR {p.stats.ovr} • BAT {p.stats.bat} • BOWL {p.stats.bowl} • PWR {p.stats.power}
@@ -3075,11 +3061,17 @@ export default function SeasonHubPage() {
                         benchPlayers.map(p => (
                           <div key={p.id} className="p-3 rounded-lg bg-canvas border border-borderDark hover:border-slate-600 transition-colors flex items-center justify-between text-xs">
                             <div>
-                              <div className="font-bold text-slate-300 flex items-center gap-1.5">
+                              <div className="font-bold text-slate-300 flex items-center gap-1.5 flex-wrap">
                                 <span>{p.name}</span>
                                 {p.isOverseas && <span>✈️</span>}
                                 {p.role === 'WK' && <span className="text-[9px] px-1.5 py-0.5 rounded bg-brand-gold/20 text-brand-gold font-bold">WK</span>}
                                 {TeamMaker.isBowler(p) && <span className="text-[9px] px-1.5 py-0.5 rounded bg-brand-emerald/20 text-brand-emerald font-bold">BOWL</span>}
+                                {p.injuryStatus === 1 && <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 font-bold border border-amber-500/30">🩹 Niggle (Out 1M)</span>}
+                                {p.injuryStatus !== undefined && p.injuryStatus > 1 && <span className="text-[9px] px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-400 font-bold border border-rose-500/30">🚑 Strain ({p.injuryStatus}M)</span>}
+                                {p.injuryStatus === -1 && <span className="text-[9px] px-1.5 py-0.5 rounded bg-red-950/70 text-red-400 font-bold border border-red-500/40">❌ Ruled Out</span>}
+                                {p.workload !== undefined && p.workload > 70 && !p.injuryStatus && (
+                                  <span className="text-[9px] px-1.5 py-0.5 rounded bg-yellow-500/10 text-yellow-500 font-mono">⚡ {Math.round(p.workload)}% load</span>
+                                )}
                               </div>
                               <div className="text-[10px] text-slate-500 font-mono mt-0.5">
                                 {p.role} • OVR {p.stats.ovr} • BAT {p.stats.bat} • BOWL {p.stats.bowl} • PWR {p.stats.power}
@@ -3088,10 +3080,10 @@ export default function SeasonHubPage() {
                             <button
                               type="button"
                               onClick={() => handleAddPlayer(p)}
-                              disabled={selectedCount >= 11 || (p.isOverseas && overseasCount >= 4)}
+                              disabled={selectedCount >= 11 || (p.isOverseas && overseasCount >= 4) || (p.injuryStatus !== undefined && p.injuryStatus !== 0)}
                               className="px-2.5 py-1 rounded bg-subpill hover:bg-brand-gold/20 hover:text-brand-gold border border-borderDark text-[11px] text-slate-300 font-mono transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                             >
-                              Add to XI
+                              {p.injuryStatus !== undefined && p.injuryStatus !== 0 ? 'Sidelined' : 'Add to XI'}
                             </button>
                           </div>
                         ))
@@ -3315,8 +3307,8 @@ export default function SeasonHubPage() {
                                   className="rounded border-borderDark text-brand-emerald focus:ring-0 cursor-pointer"
                                 />
                                 <span className="font-bold text-slate-200">{p.name}</span>
+                                <span className="text-[11px] text-slate-400 font-normal">({p.role} • OVR {p.stats?.ovr})</span>
                               </label>
-                              <div>{getPowerplaySkillBadge(p)}</div>
                             </div>
 
                             {/* Over 1 First Bowler Toggle */}
@@ -3361,15 +3353,10 @@ export default function SeasonHubPage() {
                     <div className="space-y-4 flex-1">
                       {/* Slot 1: Overs 17 & 19 Specialist */}
                       <div className="space-y-1.5">
-                        <div className="flex items-center justify-between gap-1 flex-wrap">
-                          <label className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
-                            <span className="w-2 h-2 rounded-full bg-brand-gold" />
-                            Overs 17 & 19 Specialist:
-                          </label>
-                          {deathOver17_19BowlerId && candidateBowlers.find(p => p.id === deathOver17_19BowlerId) && (
-                            <div>{getDeathSkillBadge(candidateBowlers.find(p => p.id === deathOver17_19BowlerId)!)}</div>
-                          )}
-                        </div>
+                        <label className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
+                          <span className="w-2 h-2 rounded-full bg-brand-gold" />
+                          Overs 17 & 19 Specialist:
+                        </label>
                         <select
                           value={deathOver17_19BowlerId}
                           onChange={(e) => {
@@ -3384,12 +3371,10 @@ export default function SeasonHubPage() {
                         >
                           <option value="">-- Select Specialist for Overs 17 & 19 --</option>
                           {candidateBowlers.map(p => {
-                            const rating = p.tacticalSynergy?.death ?? (p.stats?.bowl ? p.stats.bowl / 100 : 0.3);
-                            const label = rating >= 0.70 ? '★ Elite Yorker Specialist' : rating >= 0.45 ? 'Solid Death Control' : 'Risky at Death';
                             const isAssignedOther = p.id === deathOver18_20BowlerId;
                             return (
                               <option key={p.id} value={p.id} disabled={isAssignedOther}>
-                                {p.name} ({p.role} • {label}){isAssignedOther ? ' [Assigned 18 & 20]' : ''}
+                                {p.name} ({p.role} • OVR {p.stats?.ovr}){isAssignedOther ? ' [Assigned 18 & 20]' : ''}
                               </option>
                             );
                           })}
@@ -3398,15 +3383,10 @@ export default function SeasonHubPage() {
 
                       {/* Slot 2: Overs 18 & 20 Closer */}
                       <div className="space-y-1.5">
-                        <div className="flex items-center justify-between gap-1 flex-wrap">
-                          <label className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
-                            <span className="w-2 h-2 rounded-full bg-brand-emerald" />
-                            Overs 18 & 20 Closer:
-                          </label>
-                          {deathOver18_20BowlerId && candidateBowlers.find(p => p.id === deathOver18_20BowlerId) && (
-                            <div>{getDeathSkillBadge(candidateBowlers.find(p => p.id === deathOver18_20BowlerId)!)}</div>
-                          )}
-                        </div>
+                        <label className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
+                          <span className="w-2 h-2 rounded-full bg-brand-emerald" />
+                          Overs 18 & 20 Closer:
+                        </label>
                         <select
                           value={deathOver18_20BowlerId}
                           onChange={(e) => {
@@ -3421,12 +3401,10 @@ export default function SeasonHubPage() {
                         >
                           <option value="">-- Select Closer for Overs 18 & 20 --</option>
                           {candidateBowlers.map(p => {
-                            const rating = p.tacticalSynergy?.death ?? (p.stats?.bowl ? p.stats.bowl / 100 : 0.3);
-                            const label = rating >= 0.70 ? '★ Elite Yorker Specialist' : rating >= 0.45 ? 'Solid Death Control' : 'Risky at Death';
                             const isAssignedOther = p.id === deathOver17_19BowlerId;
                             return (
                               <option key={p.id} value={p.id} disabled={isAssignedOther}>
-                                {p.name} ({p.role} • {label}){isAssignedOther ? ' [Assigned 17 & 19]' : ''}
+                                {p.name} ({p.role} • OVR {p.stats?.ovr}){isAssignedOther ? ' [Assigned 17 & 19]' : ''}
                               </option>
                             );
                           })}
@@ -3446,10 +3424,10 @@ export default function SeasonHubPage() {
                         </div>
                       )}
 
-                      {/* Available Candidate Bowler Death Profiles */}
+                      {/* Available Candidate Death Bowlers */}
                       <div className="pt-2 border-t border-borderDark/60 space-y-1.5">
                         <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">
-                          Candidate Bowler Death Profiles:
+                          Candidate Death Bowlers:
                         </span>
                         <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
                           {candidateBowlers.map(p => {
@@ -3484,7 +3462,7 @@ export default function SeasonHubPage() {
                                     </span>
                                   )}
                                 </div>
-                                <div>{getDeathSkillBadge(p)}</div>
+                                <span className="text-[10px] text-slate-400 font-mono font-semibold">OVR {p.stats?.ovr}</span>
                               </div>
                             );
                           })}
@@ -3621,9 +3599,7 @@ export default function SeasonHubPage() {
                         </button>
                       </div>
                     )}
-                    <p className="text-[10px] text-slate-400 pt-1 border-t border-amber-500/20 italic">
-                      💡 Tip: Skill tags (e.g. &quot;Risky at Death&quot;, &quot;Solid Death Control&quot;) are purely tactical indicators and NEVER prevent you from saving your lineup.
-                    </p>
+
                   </div>
                 )}
 

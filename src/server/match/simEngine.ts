@@ -48,6 +48,7 @@ export interface SimEngineConfig {
   determinismRatio: number;      // 0.0 to 1.0 (Default: 0.45 -> 45% deterministic skill anchor, 55% cricket variance)
   skillConsistencyScale: number; // 0.0 to 1.0 (Default: 0.35 -> elite player rating dampens variance)
   matchupSubtlety: number;       // 0.0 to 1.0 (Default: 0.25 -> gentle realistic tactical nudge)
+  simAlpha?: number;             // 0.5 to 1.5 (Default: 0.8 -> scales batting SR by alpha, bowling Econ by 2 - alpha)
 }
 
 export interface OverInputState {
@@ -323,12 +324,17 @@ export class MatchSimEngine {
       determinismRatio: 0.45,       // Default: 45% deterministic skill, 55% cricket variance
       skillConsistencyScale: 0.35,  // Elite skill dampens volatility
       matchupSubtlety: 0.25,        // Subtle, gentle matchup advantage
+      simAlpha: 0.80,               // Default: 0.8 (user-tunable 0.5 to 1.5)
       ...customConfig
     };
   }
 
   public setHostRandomnessScale(determinismRatio: number): void {
     this.config.determinismRatio = Math.max(0.0, Math.min(1.0, determinismRatio));
+  }
+
+  public setSimAlpha(alpha: number): void {
+    this.config.simAlpha = Math.max(0.5, Math.min(1.5, alpha));
   }
 
   public async init(): Promise<void> {
@@ -536,6 +542,10 @@ export class MatchSimEngine {
     state: OverInputState
   ): { runs: number; wickets: number } {
     let { mu, wicketProb } = dist;
+
+    // Simulation Alpha scale: scales batting run rate (SR) by alpha, bowling control by (2 - alpha)
+    const simAlpha = this.config.simAlpha ?? 0.8;
+    mu *= simAlpha;
 
     // Home Ground Advantage
     if (state.isBattingTeamHome) {

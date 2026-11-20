@@ -103,6 +103,10 @@ export class FullMatchSimulator {
     this.engine.setHostRandomnessScale(determinismRatio);
   }
 
+  public setSimAlpha(alpha: number): void {
+    this.engine.setSimAlpha(alpha);
+  }
+
   public async init(): Promise<void> {
     await this.engine.init();
   }
