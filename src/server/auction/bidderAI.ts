@@ -1184,14 +1184,26 @@ export class AuctionBidderAI {
 
     // AI Random Variation from Host Slider:
     // User Formula: targetVal += lambda * (rand() * purse / 125) * (rand() > 50 ? -1 : 1.5)
-    // where lambda is the AI conservatism / aggression slider (determinismRatio) from the menu
+    // where lambda is the AI conservatism / aggression slider (determinismRatio) from the menu.
+    // Absolute Randomness: Seeded with high-resolution elapsed time for the Bimodal Direction Factor.
     const noiseKey = `${franchiseId}_${player.id}`;
     let randomNoise = this.lotNoiseMap.get(noiseKey);
     if (randomNoise === undefined) {
       const lambda = hostDeterminism;
       const purseRatio = (state.purseRemainingCr || 125.0) / 125.0;
-      const randSign = (Math.random() * 100 > 50) ? -1 : 1.5;
-      randomNoise = lambda * (Math.random() * purseRatio) * randSign;
+
+      // Seed PRNG using elapsed time (Date.now() + microsecond performance.now()) for absolute randomness
+      const elapsedTime = typeof performance !== 'undefined' ? (Date.now() + performance.now()) : Date.now();
+      const timeSeed = (Math.floor(elapsedTime * 1000) ^ hashString(`${franchiseId}:${player.id}:${elapsedTime}`)) >>> 0;
+      const rand = mulberry32(timeSeed);
+
+      // Bimodal Direction Factor: (rand() > 50 ? -1 : 1.5) seeded by elapsed time
+      const randBimodal = rand() * 100;
+      const randSign = randBimodal > 50 ? -1 : 1.5;
+
+      // Added value magnitude using elapsed-time seeded PRNG
+      const randMagnitude = rand();
+      randomNoise = lambda * (randMagnitude * purseRatio) * randSign;
       this.lotNoiseMap.set(noiseKey, randomNoise);
     }
     targetVal += randomNoise;
