@@ -1,6 +1,6 @@
 /**
  * socketHub.ts - Authoritative WebSocket Multiplayer Engine & State Machine
- * Manages Map<roomCode, RoomState> in RAM for <0.2ms O(1) live bidding and 7-second MongoDB persistence.
+ * Manages Map<roomCode, RoomState> in RAM for <0.2ms O(1) live bidding and 60-second MongoDB persistence.
  */
 
 import { Server as SocketIOServer, Socket } from 'socket.io';
