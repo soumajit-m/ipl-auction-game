@@ -41,6 +41,8 @@ export interface Team2026 {
     deathBowlerIds?: string[];
     backupBowlerId: string;
   };
+  overPlan?: string[];
+  wkId?: string;
 }
 
 export interface InningsScorecard {
@@ -138,17 +140,33 @@ export class FullMatchSimulator {
     const firstBowlerId = team.firstBowlerId || team.bowlerPool352?.firstBowlerId || ppPool[0];
     const backupBowlerId = team.backupBowlerId || team.bowlerPool352?.backupBowlerId;
 
-    // Frontline Bowler Protection:
-    // Only players with role === "PACE" || role === "SPIN" (or "BOWL")
-    // or (role === "AR" && subType === "BOWL_AR" && bowl >= 78) are assigned to bowl full 4-over spells.
-    // Part-time batting all-rounders (subType === "BAT_AR") are strictly capped at 2 overs.
-    const maxBowlerOvers = (p: IPLPlayer) => (TeamMaker.isFrontlineBowler(p) ? 4 : 2);
+    // Strict bowler eligibility: Wicketkeepers and pure non-bowlers can NEVER bowl
+    const isEligibleToBowl = (p: IPLPlayer | undefined): p is IPLPlayer => {
+      if (!p) return false;
+      if (p.role === 'WK' || p.subType?.startsWith('WK') || p.id === team.wkId) return false;
+      if (p.role === 'BAT' && !p.isBowlingCapable && (p.stats?.bowl ?? 0) < 60) return false;
+      return TeamMaker.isBowler(p);
+    };
+
+    // --- PRIORITY 0: EXPLICIT OVER-BY-OVER PLAN (If defined by user/human) ---
+    if (team.overPlan && team.overPlan[overIdx]) {
+      const plannedBowler = this.findPlayer(team, team.overPlan[overIdx]);
+      if (isEligibleToBowl(plannedBowler)) {
+        const trk = tracking[plannedBowler.id] || { total: 0, pp: 0, mid: 0, death: 0 };
+        // Strictly obey cricket legality: max 4 overs, no consecutive overs
+        if (plannedBowler.id !== lastBowlerId && trk.total < 4) {
+          return plannedBowler;
+        }
+      }
+    }
 
     // --- PHASE 1: POWERPLAY (Overs 1 to 6) ---
     if (overIdx === 0) {
       // Over 1: designated Over 1 starter
       const designated = this.findPlayer(team, firstBowlerId);
-      if (designated) return designated;
+      if (designated && isEligibleToBowl(designated) && (tracking[designated.id]?.total ?? 0) < 4) {
+        return designated;
+      }
     }
 
     if (overIdx <= 5) {
@@ -156,9 +174,9 @@ export class FullMatchSimulator {
       const eligiblePP = ppPool
         .map(id => this.findPlayer(team, id))
         .filter((p): p is IPLPlayer => {
-          if (!p) return false;
+          if (!isEligibleToBowl(p)) return false;
           const trk = tracking[p.id];
-          return p.id !== lastBowlerId && trk.pp < 2 && trk.total < maxBowlerOvers(p);
+          return p.id !== lastBowlerId && trk.pp < 2 && trk.total < 4;
         });
 
       if (eligiblePP.length > 0) {
@@ -182,9 +200,9 @@ export class FullMatchSimulator {
 
       if (targetDeathId) {
         const targetPlayer = this.findPlayer(team, targetDeathId);
-        if (targetPlayer && targetPlayer.id !== lastBowlerId) {
+        if (targetPlayer && isEligibleToBowl(targetPlayer) && targetPlayer.id !== lastBowlerId) {
           const trk = tracking[targetPlayer.id];
-          if (trk && trk.death < 2 && trk.total < maxBowlerOvers(targetPlayer)) {
+          if (trk && trk.death < 2 && trk.total < 4) {
             return targetPlayer;
           }
         }
@@ -193,11 +211,11 @@ export class FullMatchSimulator {
       // Alternate between the 2 death bowlers (Overs 17 & 19 vs 18 & 20, 2 overs each)
       const deathPlayers = deathPool
         .map(id => this.findPlayer(team, id))
-        .filter((p): p is IPLPlayer => Boolean(p));
+        .filter((p): p is IPLPlayer => Boolean(p && isEligibleToBowl(p)));
 
       const eligibleDeath = deathPlayers.filter(p => {
         const trk = tracking[p.id];
-        return p.id !== lastBowlerId && trk.death < 2 && trk.total < maxBowlerOvers(p);
+        return p.id !== lastBowlerId && trk.death < 2 && trk.total < 4;
       });
 
       if (eligibleDeath.length > 0) {
@@ -210,10 +228,10 @@ export class FullMatchSimulator {
     const eligibleMid = midPool
       .map(id => this.findPlayer(team, id))
       .filter((p): p is IPLPlayer => {
-        if (!p) return false;
+        if (!isEligibleToBowl(p)) return false;
         const trk = tracking[p.id];
         const midMax = quotas[p.id]?.usableMiddleOvers ?? 2;
-        return p.id !== lastBowlerId && trk.mid < midMax && trk.total < maxBowlerOvers(p);
+        return p.id !== lastBowlerId && trk.mid < midMax && trk.total < 4;
       });
 
     if (eligibleMid.length > 0) {
@@ -243,25 +261,44 @@ export class FullMatchSimulator {
       return eligibleMid[0];
     }
 
-    // --- EMERGENCY FALLBACK (Backup Bowler or any eligible XI player) ---
+    // --- STRICT EMERGENCY FALLBACK (ONLY BOWLING-CAPABLE PLAYERS, NEVER BATTERS OR WKs) ---
     const backup = this.findPlayer(team, backupBowlerId);
-    if (backup && backup.id !== lastBowlerId && tracking[backup.id]?.total < maxBowlerOvers(backup)) {
+    if (backup && isEligibleToBowl(backup) && backup.id !== lastBowlerId && (tracking[backup.id]?.total ?? 0) < 4) {
       return backup;
     }
 
-    const anyEligible = team.playingXI.filter(p => p.id !== lastBowlerId && (tracking[p.id]?.total ?? 0) < maxBowlerOvers(p));
-    if (anyEligible.length > 0) {
-      anyEligible.sort((a, b) => b.stats.bowl - a.stats.bowl);
-      return anyEligible[0];
+    // 1. Any designated pool bowler who has bowled < 4 overs and not lastBowlerId
+    const allPoolIds = Array.from(new Set([...midPool, ...ppPool, ...deathPool, backupBowlerId])).filter(Boolean);
+    const eligiblePoolBowlers = allPoolIds
+      .map(id => this.findPlayer(team, id))
+      .filter((p): p is IPLPlayer => Boolean(p && isEligibleToBowl(p) && p.id !== lastBowlerId && (tracking[p.id]?.total ?? 0) < 4));
+
+    if (eligiblePoolBowlers.length > 0) {
+      eligiblePoolBowlers.sort((a, b) => {
+        const remA = 4 - (tracking[a.id]?.total ?? 0);
+        const remB = 4 - (tracking[b.id]?.total ?? 0);
+        if (remA !== remB) return remB - remA;
+        return (b.stats?.bowl ?? 0) - (a.stats?.bowl ?? 0);
+      });
+      return eligiblePoolBowlers[0];
     }
 
-    const fallback = team.playingXI.filter(p => p.id !== lastBowlerId && (tracking[p.id]?.total ?? 0) < 4);
-    if (fallback.length > 0) {
-      fallback.sort((a, b) => b.stats.bowl - a.stats.bowl);
-      return fallback[0];
+    // 2. Any bowling-capable player in playingXI who has bowled < 4 overs and not lastBowlerId
+    const eligibleXIBowlers = team.playingXI.filter(p => isEligibleToBowl(p) && p.id !== lastBowlerId && (tracking[p.id]?.total ?? 0) < 4);
+    if (eligibleXIBowlers.length > 0) {
+      eligibleXIBowlers.sort((a, b) => (b.stats?.bowl ?? 0) - (a.stats?.bowl ?? 0));
+      return eligibleXIBowlers[0];
     }
 
-    return team.playingXI[0];
+    // 3. Absolute safe resort: any bowling-capable player from playingXI who is not lastBowlerId
+    const allBowlers = team.playingXI.filter(p => isEligibleToBowl(p));
+    const safeBowler = allBowlers.find(p => p.id !== lastBowlerId) || allBowlers[0];
+    if (safeBowler) return safeBowler;
+
+    // Safety guard: even if all else fails, pick the player in playingXI with the highest bowl rating (excluding WKs)
+    const nonWkPlayers = team.playingXI.filter(p => p.role !== 'WK' && !p.subType?.startsWith('WK') && p.id !== team.wkId);
+    nonWkPlayers.sort((a, b) => (b.stats?.bowl ?? 0) - (a.stats?.bowl ?? 0));
+    return nonWkPlayers.find(p => p.id !== lastBowlerId) || nonWkPlayers[0] || team.playingXI[0];
   }
 
   public async simulateInnings(

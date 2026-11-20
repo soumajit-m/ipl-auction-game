@@ -87,6 +87,7 @@ export default function SeasonHubPage() {
   const [deathBowlerIds, setDeathBowlerIds] = useState<string[]>([]);
   const [midBowlerIds, setMidBowlerIds] = useState<string[]>([]);
   const [backupBowlerId, setBackupBowlerId] = useState<string>('');
+  const [overPlan, setOverPlan] = useState<string[]>([]);
   const [isSimulating, setIsSimulating] = useState(false);
   const [showSimulateAllConfirm, setShowSimulateAllConfirm] = useState(false);
 
@@ -174,6 +175,61 @@ export default function SeasonHubPage() {
   const currentSquad = currentTeam?.squad || [];
   const currentServerLineup = season?.lineups?.[selectedTeamId];
 
+  // Helper to generate a mathematically sound, non-consecutive 20-over bowling plan from 3-5-2 pools
+  const generateOverPlanFromPools = (
+    pool?: any,
+    availableBowlers?: string[]
+  ): string[] => {
+    const plan: string[] = new Array(20).fill('');
+    const pp = (pool?.powerplayBowlerIds || []).filter((id: string) => !availableBowlers || availableBowlers.includes(id));
+    const firstB = pool?.firstBowlerId || pp[0] || (availableBowlers && availableBowlers[0]) || '';
+    const otherPP = pp.filter((id: string) => id !== firstB);
+    const pp2 = otherPP[0] || (availableBowlers && availableBowlers[1]) || firstB;
+    const pp3 = otherPP[1] || (availableBowlers && availableBowlers[2]) || pp2;
+
+    const d17 = pool?.deathOver17_19BowlerId || pool?.deathBowlerIds?.[0] || (availableBowlers && availableBowlers[0]) || '';
+    const d18 = pool?.deathOver18_20BowlerId || pool?.deathBowlerIds?.[1] || (availableBowlers && availableBowlers[1]) || '';
+
+    const mid = (pool?.middleBowlerIds || []).filter((id: string) => !availableBowlers || availableBowlers.includes(id));
+    const m = mid.length >= 5 ? mid : (availableBowlers || []);
+
+    // Powerplay (Overs 1 to 6)
+    // Over 1: PP1 (FirstBowler), Over 2: PP2, Over 3: PP1, Over 4: PP3, Over 5: PP2, Over 6: PP3
+    plan[0] = firstB;
+    plan[1] = pp2;
+    plan[2] = firstB;
+    plan[3] = pp3;
+    plan[4] = pp2;
+    plan[5] = pp3;
+
+    // Middle Overs (Overs 7 to 16) - 5 bowlers rotated evenly (each gets 2 overs)
+    const m1 = m[0] || pp2;
+    const m2 = m[1] || pp3;
+    const m3 = m[2] || firstB;
+    const m4 = m[3] || d17;
+    const m5 = m[4] || d18;
+
+    plan[6] = m1;
+    plan[7] = m2;
+    plan[8] = m3;
+    plan[9] = m4;
+    plan[10] = m5;
+    plan[11] = m1;
+    plan[12] = m2;
+    plan[13] = m3;
+    plan[14] = m4;
+    plan[15] = m5;
+
+    // Death Overs (Overs 17 to 20)
+    // Over 17: D1, Over 18: D2, Over 19: D1, Over 20: D2
+    plan[16] = d17 || m4;
+    plan[17] = d18 || m5;
+    plan[18] = d17 || m4;
+    plan[19] = d18 || m5;
+
+    return plan;
+  };
+
   // Helper to sync all lineup states from a Playing11Lineup
   const syncLineupStates = (lineup: Playing11Lineup) => {
     setWorkingXI(lineup.playing11Ids);
@@ -199,6 +255,12 @@ export default function SeasonHubPage() {
       setDeathBowlerIds([cleanD17, cleanD18].filter(Boolean));
       setMidBowlerIds(cleanMid);
       setBackupBowlerId(lineup.bowlerPool352.backupBowlerId || '');
+
+      if (lineup.overPlan && lineup.overPlan.length === 20 && lineup.overPlan.every(Boolean)) {
+        setOverPlan(lineup.overPlan);
+      } else {
+        setOverPlan(generateOverPlanFromPools(lineup.bowlerPool352, squadBowlerIds));
+      }
     }
   };
 
@@ -587,6 +649,14 @@ export default function SeasonHubPage() {
     return computePhaseBowlerQuotas(candidateBowlerIds, ppBowlerIds, deathBowlerIds);
   }, [candidateBowlerIds, ppBowlerIds, deathBowlerIds]);
 
+  const overPlanCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const bId of overPlan) {
+      if (bId) counts[bId] = (counts[bId] || 0) + 1;
+    }
+    return counts;
+  }, [overPlan]);
+
   // Prune any non-bowlers (e.g. WK / pure bats) or benched players from bowler phase selections
   useEffect(() => {
     if (candidateBowlerIds.length > 0) {
@@ -782,12 +852,26 @@ export default function SeasonHubPage() {
     const slotted17 = deathOver17_19BowlerId || deathBowlerIds[0] || workingXI[0];
     const slotted18 = deathOver18_20BowlerId || deathBowlerIds[1] || workingXI[1];
 
+    const finalOverPlan = (overPlan.length === 20 && overPlan.every(Boolean))
+      ? overPlan
+      : generateOverPlanFromPools(
+          {
+            powerplayBowlerIds: ppBowlerIds,
+            firstBowlerId: firstBowlerId || ppBowlerIds[0],
+            middleBowlerIds: validMidBowlerIds,
+            deathOver17_19BowlerId: slotted17,
+            deathOver18_20BowlerId: slotted18
+          },
+          candidateBowlerIds
+        );
+
     const lineup: Playing11Lineup = {
       teamId: selectedTeamId,
       playing11Ids: workingXI,
       captainId: finalCaptain,
       wkId: finalWk,
       battingOrder: finalBattingOrder,
+      overPlan: finalOverPlan,
       bowlerPool352: {
         powerplayBowlerIds: ppBowlerIds.filter(id => candidateBowlerIds.includes(id)),
         firstBowlerId: firstBowlerId || ppBowlerIds[0] || workingXI[0],
@@ -3586,6 +3670,282 @@ export default function SeasonHubPage() {
                         </option>
                       ))}
                     </select>
+                  </div>
+                </div>
+
+                {/* Section D: Over-by-Over 20-Over Strict Bowling Assignment Deck */}
+                <div className="bg-tile border border-borderDark rounded-xl p-5 font-mono text-xs space-y-4">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-3 border-b border-borderDark gap-3">
+                    <div>
+                      <h3 className="font-bold text-slate-200 uppercase tracking-wider text-xs flex items-center gap-2">
+                        <Target className="w-4 h-4 text-brand-emerald" />
+                        <span>OVER-BY-OVER BOWLING ASSIGNMENT (OVERS 1 TO 20)</span>
+                      </h3>
+                      <p className="text-[11px] text-slate-400 mt-0.5">
+                        Strict Tactical Blueprint • Simulator strictly follows this exact 20-over rotation (Max 4 overs per bowler • No consecutive overs).
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const slotted17 = deathOver17_19BowlerId || deathBowlerIds[0] || candidateBowlerIds[0];
+                          const slotted18 = deathOver18_20BowlerId || deathBowlerIds[1] || candidateBowlerIds[1];
+                          const generated = generateOverPlanFromPools(
+                            {
+                              powerplayBowlerIds: ppBowlerIds,
+                              firstBowlerId: firstBowlerId || ppBowlerIds[0],
+                              middleBowlerIds: validMidBowlerIds,
+                              deathOver17_19BowlerId: slotted17,
+                              deathOver18_20BowlerId: slotted18
+                            },
+                            candidateBowlerIds
+                          );
+                          setOverPlan(generated);
+                          setSaveSuccessMsg('⚡ 20-Over Plan synchronized from 3-5-2 pools!');
+                          setTimeout(() => setSaveSuccessMsg(null), 3000);
+                        }}
+                        className="px-3 py-1.5 rounded-lg bg-surfaceDark hover:bg-subpill border border-borderDark text-brand-gold text-[11px] font-bold transition-all flex items-center gap-1.5 active:scale-95 whitespace-nowrap shadow-sm"
+                      >
+                        <Zap className="w-3.5 h-3.5 fill-current" />
+                        <span>Auto-Fill 20 Overs from 3-5-2</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Bowler Quota Status Pills */}
+                  <div className="p-3 rounded-lg bg-canvas border border-borderDark">
+                    <span className="text-[10px] text-slate-400 uppercase tracking-wider font-bold block mb-2">
+                      Assigned Bowler Workload (Max 4.0 Overs Each):
+                    </span>
+                    <div className="flex flex-wrap items-center gap-2">
+                      {candidateBowlers.map(p => {
+                        const count = overPlanCounts[p.id] || 0;
+                        const isOver = count > 4;
+                        const isCapped = count === 4;
+                        return (
+                          <div
+                            key={p.id}
+                            className={`px-2.5 py-1 rounded-md border text-[11px] flex items-center gap-1.5 transition-all ${
+                              isOver
+                                ? 'bg-rose-500/15 border-rose-500/40 text-rose-300 font-bold'
+                                : isCapped
+                                ? 'bg-brand-emerald/15 border-brand-emerald/40 text-brand-emerald font-bold'
+                                : count > 0
+                                ? 'bg-sky-500/15 border-sky-500/40 text-sky-300'
+                                : 'bg-tile border-borderDark text-slate-500'
+                            }`}
+                          >
+                            <span className="font-medium text-slate-200">{p.name}</span>
+                            <span className="tabular-nums font-bold">({count}/4 ov)</span>
+                            {isOver && <span className="text-[9px] text-rose-400">⚠️ Exceeded</span>}
+                          </div>
+                        );
+                      })}
+                      <div className="ml-auto text-[11px] text-slate-400 tabular-nums">
+                        Total Overs Assigned: <strong className="text-brand-gold font-bold">{Object.values(overPlanCounts).reduce((a, b) => a + b, 0)}</strong> / 20
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 20-Over Visual Assignment Grid */}
+                  <div className="space-y-4">
+                    {/* Phase 1: Powerplay (Overs 1 to 6) */}
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-[10px] px-2 py-0.5 rounded font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                          POWERPLAY (OVERS 1 - 6)
+                        </span>
+                        <span className="text-[10px] text-slate-500">2 Overs per PP bowler • Swing & Seam</span>
+                      </div>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+                        {[0, 1, 2, 3, 4, 5].map(idx => {
+                          const currentBowlerId = overPlan[idx] || '';
+                          const prevBowlerId = idx > 0 ? overPlan[idx - 1] : null;
+                          const isConsecutive = Boolean(currentBowlerId && currentBowlerId === prevBowlerId);
+                          const isExceeded = (overPlanCounts[currentBowlerId] || 0) > 4;
+
+                          return (
+                            <div
+                              key={idx}
+                              className={`p-2.5 rounded-lg border transition-all ${
+                                isConsecutive || isExceeded
+                                  ? 'bg-rose-500/10 border-rose-500/50'
+                                  : currentBowlerId
+                                  ? 'bg-canvas border-borderDark hover:border-slate-500'
+                                  : 'bg-canvas/50 border-dashed border-borderDark'
+                              }`}
+                            >
+                              <div className="flex items-center justify-between text-[10px] mb-1.5">
+                                <span className="font-bold text-slate-300">OVER #{idx + 1}</span>
+                                {idx === 0 && <span className="text-[9px] text-brand-gold font-bold">Starter</span>}
+                              </div>
+                              <select
+                                value={currentBowlerId}
+                                onChange={e => {
+                                  const val = e.target.value;
+                                  setOverPlan(prev => {
+                                    const next = prev.length === 20 ? [...prev] : generateOverPlanFromPools(undefined, candidateBowlerIds);
+                                    next[idx] = val;
+                                    return next;
+                                  });
+                                }}
+                                className="w-full bg-tile border border-borderDark rounded text-[11px] text-slate-200 px-2 py-1 focus:border-brand-gold focus:outline-none"
+                              >
+                                <option value="">-- Bowler --</option>
+                                {candidateBowlers.map(p => (
+                                  <option key={p.id} value={p.id}>
+                                    {p.name} ({p.role})
+                                  </option>
+                                ))}
+                              </select>
+                              {isConsecutive && (
+                                <span className="text-[9px] text-rose-400 font-bold mt-1 block">
+                                  ⚠️ Consecutive over
+                                </span>
+                              )}
+                              {isExceeded && (
+                                <span className="text-[9px] text-rose-400 font-bold mt-1 block">
+                                  ⚠️ Max 4 overs exceeded
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Phase 2: Middle Overs (Overs 7 to 16) */}
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-[10px] px-2 py-0.5 rounded font-bold bg-sky-500/20 text-sky-300 border border-sky-500/30">
+                          MIDDLE OVERS (OVERS 7 - 16)
+                        </span>
+                        <span className="text-[10px] text-slate-500">10 Overs Total • Spin Squeeze & Workload Distribution</span>
+                      </div>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+                        {[6, 7, 8, 9, 10, 11, 12, 13, 14, 15].map(idx => {
+                          const currentBowlerId = overPlan[idx] || '';
+                          const prevBowlerId = overPlan[idx - 1] || null;
+                          const isConsecutive = Boolean(currentBowlerId && currentBowlerId === prevBowlerId);
+                          const isExceeded = (overPlanCounts[currentBowlerId] || 0) > 4;
+
+                          return (
+                            <div
+                              key={idx}
+                              className={`p-2.5 rounded-lg border transition-all ${
+                                isConsecutive || isExceeded
+                                  ? 'bg-rose-500/10 border-rose-500/50'
+                                  : currentBowlerId
+                                  ? 'bg-canvas border-borderDark hover:border-slate-500'
+                                  : 'bg-canvas/50 border-dashed border-borderDark'
+                              }`}
+                            >
+                              <div className="flex items-center justify-between text-[10px] mb-1.5">
+                                <span className="font-bold text-slate-300">OVER #{idx + 1}</span>
+                              </div>
+                              <select
+                                value={currentBowlerId}
+                                onChange={e => {
+                                  const val = e.target.value;
+                                  setOverPlan(prev => {
+                                    const next = prev.length === 20 ? [...prev] : generateOverPlanFromPools(undefined, candidateBowlerIds);
+                                    next[idx] = val;
+                                    return next;
+                                  });
+                                }}
+                                className="w-full bg-tile border border-borderDark rounded text-[11px] text-slate-200 px-2 py-1 focus:border-brand-gold focus:outline-none"
+                              >
+                                <option value="">-- Bowler --</option>
+                                {candidateBowlers.map(p => (
+                                  <option key={p.id} value={p.id}>
+                                    {p.name} ({p.role})
+                                  </option>
+                                ))}
+                              </select>
+                              {isConsecutive && (
+                                <span className="text-[9px] text-rose-400 font-bold mt-1 block">
+                                  ⚠️ Consecutive over
+                                </span>
+                              )}
+                              {isExceeded && (
+                                <span className="text-[9px] text-rose-400 font-bold mt-1 block">
+                                  ⚠️ Max 4 overs exceeded
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Phase 3: Death Overs (Overs 17 to 20) */}
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-[10px] px-2 py-0.5 rounded font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                          DEATH OVERS (OVERS 17 - 20)
+                        </span>
+                        <span className="text-[10px] text-slate-500">Yorkers & High Pressure • Specialist (17 & 19) / Closer (18 & 20)</span>
+                      </div>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                        {[16, 17, 18, 19].map(idx => {
+                          const currentBowlerId = overPlan[idx] || '';
+                          const prevBowlerId = overPlan[idx - 1] || null;
+                          const isConsecutive = Boolean(currentBowlerId && currentBowlerId === prevBowlerId);
+                          const isExceeded = (overPlanCounts[currentBowlerId] || 0) > 4;
+
+                          return (
+                            <div
+                              key={idx}
+                              className={`p-2.5 rounded-lg border transition-all ${
+                                isConsecutive || isExceeded
+                                  ? 'bg-rose-500/10 border-rose-500/50'
+                                  : currentBowlerId
+                                  ? 'bg-canvas border-borderDark hover:border-slate-500'
+                                  : 'bg-canvas/50 border-dashed border-borderDark'
+                              }`}
+                            >
+                              <div className="flex items-center justify-between text-[10px] mb-1.5">
+                                <span className="font-bold text-slate-300">OVER #{idx + 1}</span>
+                                <span className="text-[9px] text-brand-emerald font-bold">
+                                  {idx === 16 ? 'Ov 17 Set' : idx === 17 ? 'Ov 18 Closer' : idx === 18 ? 'Ov 19 Penult' : 'Final Over'}
+                                </span>
+                              </div>
+                              <select
+                                value={currentBowlerId}
+                                onChange={e => {
+                                  const val = e.target.value;
+                                  setOverPlan(prev => {
+                                    const next = prev.length === 20 ? [...prev] : generateOverPlanFromPools(undefined, candidateBowlerIds);
+                                    next[idx] = val;
+                                    return next;
+                                  });
+                                }}
+                                className="w-full bg-tile border border-borderDark rounded text-[11px] text-slate-200 px-2 py-1 focus:border-brand-gold focus:outline-none"
+                              >
+                                <option value="">-- Bowler --</option>
+                                {candidateBowlers.map(p => (
+                                  <option key={p.id} value={p.id}>
+                                    {p.name} ({p.role})
+                                  </option>
+                                ))}
+                              </select>
+                              {isConsecutive && (
+                                <span className="text-[9px] text-rose-400 font-bold mt-1 block">
+                                  ⚠️ Consecutive over
+                                </span>
+                              )}
+                              {isExceeded && (
+                                <span className="text-[9px] text-rose-400 font-bold mt-1 block">
+                                  ⚠️ Max 4 overs exceeded
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
                   </div>
                 </div>
 

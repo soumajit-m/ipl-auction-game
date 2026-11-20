@@ -2954,14 +2954,11 @@ export class SocketHub {
         teamA.squad.find(p => !p.isOverseas && TeamMaker.isBowler(p)) ||
         teamA.squad[0];
 
-      let xiA = lineupA.playing11Ids.map(id => getPlayerA(id));
-
-      if (xiA.length !== 11 || !validate352Lineup(lineupA, teamA.squad).valid) {
-        const profA = DEFAULT_IPL_FRANCHISES.find(p => p.id === teamA.franchiseId);
-        lineupA = TeamMaker.selectEliteAILineup(teamA.squad, profA?.homePitch, undefined, teamA.franchiseId);
-        room.season.lineups[fixture.homeTeamId] = lineupA;
-        xiA = lineupA.playing11Ids.map(id => getPlayerA(id));
-      }
+      // Build xiA strictly following the designated battingOrder (Position 1..11)
+      const orderA = (lineupA.battingOrder && lineupA.battingOrder.length === 11)
+        ? lineupA.battingOrder
+        : lineupA.playing11Ids;
+      const xiA = orderA.map(id => getPlayerA(id));
 
       const getPlayerB = (id: string): IPLPlayer =>
         teamB.squad.find(p => p.id === id) ||
@@ -2969,21 +2966,11 @@ export class SocketHub {
         teamB.squad.find(p => !p.isOverseas && TeamMaker.isBowler(p)) ||
         teamB.squad[0];
 
-      let xiB = lineupB.playing11Ids.map(id => getPlayerB(id));
-
-      if (xiB.length !== 11 || !validate352Lineup(lineupB, teamB.squad).valid) {
-        const profB = DEFAULT_IPL_FRANCHISES.find(p => p.id === teamB.franchiseId);
-        lineupB = TeamMaker.selectEliteAILineup(teamB.squad, profB?.homePitch, undefined, teamB.franchiseId);
-        room.season.lineups[fixture.awayTeamId] = lineupB;
-        xiB = lineupB.playing11Ids.map(id => getPlayerB(id));
-      }
-
-      // Strictly order xiA and xiB by designated battingOrder
-      const orderA = (lineupA.battingOrder && lineupA.battingOrder.length === 11) ? lineupA.battingOrder : lineupA.playing11Ids;
-      xiA.sort((a, b) => orderA.indexOf(a.id) - orderA.indexOf(b.id));
-
-      const orderB = (lineupB.battingOrder && lineupB.battingOrder.length === 11) ? lineupB.battingOrder : lineupB.playing11Ids;
-      xiB.sort((a, b) => orderB.indexOf(a.id) - orderB.indexOf(b.id));
+      // Build xiB strictly following the designated battingOrder (Position 1..11)
+      const orderB = (lineupB.battingOrder && lineupB.battingOrder.length === 11)
+        ? lineupB.battingOrder
+        : lineupB.playing11Ids;
+      const xiB = orderB.map(id => getPlayerB(id));
 
       const deathA = [lineupA.bowlerPool352.deathOver17_19BowlerId, lineupA.bowlerPool352.deathOver18_20BowlerId].filter(Boolean);
       const simTeamA: Team2026 = {
@@ -2995,7 +2982,9 @@ export class SocketHub {
         deathBowlers: deathA.length === 2 ? deathA : (lineupA.bowlerPool352.deathBowlerIds || []),
         firstBowlerId: lineupA.bowlerPool352.firstBowlerId,
         backupBowlerId: lineupA.bowlerPool352.backupBowlerId,
-        bowlerPool352: lineupA.bowlerPool352
+        bowlerPool352: lineupA.bowlerPool352,
+        overPlan: lineupA.overPlan,
+        wkId: lineupA.wkId
       };
 
       const deathB = [lineupB.bowlerPool352.deathOver17_19BowlerId, lineupB.bowlerPool352.deathOver18_20BowlerId].filter(Boolean);
@@ -3008,7 +2997,9 @@ export class SocketHub {
         deathBowlers: deathB.length === 2 ? deathB : (lineupB.bowlerPool352.deathBowlerIds || []),
         firstBowlerId: lineupB.bowlerPool352.firstBowlerId,
         backupBowlerId: lineupB.bowlerPool352.backupBowlerId,
-        bowlerPool352: lineupB.bowlerPool352
+        bowlerPool352: lineupB.bowlerPool352,
+        overPlan: lineupB.overPlan,
+        wkId: lineupB.wkId
       };
 
       if (room.determinismRatio !== undefined) {

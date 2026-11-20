@@ -9,6 +9,7 @@ export interface Playing11Lineup {
   captainId: string;
   wkId: string;
   battingOrder: string[];         // 11 IDs in batting position 1..11
+  overPlan?: string[];            // Optional: Explicit 20-over plan (array of 20 player IDs for Overs 1..20)
   bowlerPool352: {
     powerplayBowlerIds: string[]; // 3 bowlers, 2 overs each
     firstBowlerId: string;        // Bowler for Over 1
