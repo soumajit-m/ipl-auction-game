@@ -4,6 +4,15 @@ import './globals.css';
 export const metadata: Metadata = {
   title: 'IPL Auction & Manager Web Game',
   description: 'Full-Stack Server-Authoritative IPL Auction and Season Manager Simulation',
+  icons: {
+    icon: [
+      { url: '/favicon.ico' },
+      { url: '/icon.png', sizes: '512x512', type: 'image/png' },
+    ],
+    apple: [
+      { url: '/apple-icon.png', sizes: '180x180', type: 'image/png' },
+    ],
+  },
 };
 
 export default function RootLayout({
