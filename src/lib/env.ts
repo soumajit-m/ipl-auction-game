@@ -4,7 +4,7 @@ const envSchema = z.object({
   MONGODB_URI: z.string().default('mongodb://127.0.0.1:27017/ipl_manager'),
   JWT_SECRET: z.string().min(16).default('ipl-auction-secret-key-production-32-chars-long'),
   HOST_ADMIN_PASS: z.string().default('ipl_host_admin_2026'),
-  NEXT_PUBLIC_WS_URL: z.string().default('http://localhost:3000'),
+  NEXT_PUBLIC_WS_URL: z.string().optional().default(''),
   DEV_FAST_CLOCK: z.preprocess((val) => {
     if (typeof val === 'string') return val.toLowerCase() === 'true' || val === '1';
     return Boolean(val);

@@ -113,10 +113,38 @@ export const useGameRoomStore = create<GameRoomStore>((set, get) => ({
     if (get().socket) return;
 
     const deviceUUID = getOrCreateDeviceUUID();
-    const wsUrl = process.env.NEXT_PUBLIC_SOCKET_URL || process.env.NEXT_PUBLIC_WS_URL || (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000');
-    const socket = io(wsUrl, {
-      transports: ['websocket', 'polling'],
-      autoConnect: true
+
+    // Dynamically resolve WebSocket URL:
+    // If running in browser on mobile/LAN (e.g. http://10.x.x.x:3000 or http://192.168.x.x:3000),
+    // NEVER force "localhost", because "localhost" on mobile points to the phone itself!
+    let wsUrl: string | undefined = undefined;
+    if (typeof window !== 'undefined') {
+      const explicitUrl = process.env.NEXT_PUBLIC_SOCKET_URL || process.env.NEXT_PUBLIC_WS_URL;
+      if (explicitUrl && explicitUrl.trim() !== '') {
+        const isClientRemote = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+        const isUrlLocalhost = explicitUrl.includes('localhost') || explicitUrl.includes('127.0.0.1');
+        if (isClientRemote && isUrlLocalhost) {
+          wsUrl = window.location.origin;
+        } else {
+          wsUrl = explicitUrl;
+        }
+      } else {
+        wsUrl = window.location.origin;
+      }
+    } else {
+      wsUrl = process.env.NEXT_PUBLIC_SOCKET_URL || process.env.NEXT_PUBLIC_WS_URL || 'http://localhost:3000';
+    }
+
+    const socket = io(wsUrl || undefined, {
+      transports: ['polling', 'websocket'],
+      autoConnect: true,
+      reconnection: true,
+      reconnectionAttempts: Infinity,
+      reconnectionDelay: 1000
+    });
+
+    socket.on('connect_error', (err) => {
+      console.warn('[Socket.IO] Connection error:', err.message, 'Target URL:', wsUrl);
     });
 
     socket.on('connect', () => {
