@@ -1,0 +1,124 @@
+{
+  "auctionsRun": 10,
+  "matchesSimulated": 100,
+  "currentAI": {
+    "auction": {
+      "totalSpentAvg": 124.85149999999996,
+      "remainingPurseAvg": 0.14849999999999997,
+      "squadSizeAvg": 18.8,
+      "superstarAvgPrice": 15.839285714285714,
+      "superstarsBoughtTotal": 532,
+      "coreAvgPrice": 7.73448275862069,
+      "coresBoughtTotal": 290,
+      "valueAvgPrice": 1.716115311909253,
+      "valuesBoughtTotal": 1058,
+      "unsoldTotal": 376,
+      "avgSquadOVR": 80.48972374117112,
+      "avgPlayingXIOVR": 85.65909090909088,
+      "archetypeSuperstarShare": {
+        "SUPERSTAR_DUELIST": 108,
+        "MONEYBALL_CORE": 78,
+        "DISCIPLINED_PRAGMATIST": 346
+      }
+    },
+    "match": {
+      "totalMatches": 100,
+      "avgInnings1Runs": 116,
+      "avgInnings2Runs": 91,
+      "avgInnings1Wickets": 7.3,
+      "avgInnings2Wickets": 6.3,
+      "highScoringGames": 3,
+      "lowScoringGames": 80,
+      "archetypeWinRates": {
+        "SUPERSTAR_DUELIST": {
+          "wins": 28,
+          "matches": 62,
+          "pct": 45.2
+        },
+        "MONEYBALL_CORE": {
+          "wins": 26,
+          "matches": 53,
+          "pct": 49.1
+        },
+        "DISCIPLINED_PRAGMATIST": {
+          "wins": 45,
+          "matches": 85,
+          "pct": 52.9
+        }
+      },
+      "teamWinRates": {
+        "CSK": 48.1,
+        "MI": 44.4,
+        "KKR": 53.8,
+        "RCB": 42.3,
+        "RR": 35,
+        "SRH": 60,
+        "DC": 66.7,
+        "PBKS": 68.4,
+        "GT": 41.7,
+        "LSG": 38.1
+      },
+      "winRateStdDev": 11.23
+    }
+  },
+  "tunedAI": {
+    "auction": {
+      "totalSpentAvg": 122.89550000000003,
+      "remainingPurseAvg": 2.1045000000000003,
+      "squadSizeAvg": 20.25,
+      "superstarAvgPrice": 14.567039106145252,
+      "superstarsBoughtTotal": 537,
+      "coreAvgPrice": 6.628846153846154,
+      "coresBoughtTotal": 390,
+      "valueAvgPrice": 1.7138433515482598,
+      "valuesBoughtTotal": 1098,
+      "unsoldTotal": 362,
+      "avgSquadOVR": 80.65803569529885,
+      "avgPlayingXIOVR": 86.22,
+      "archetypeSuperstarShare": {
+        "SUPERSTAR_DUELIST": 109,
+        "MONEYBALL_CORE": 71,
+        "DISCIPLINED_PRAGMATIST": 357
+      }
+    },
+    "match": {
+      "totalMatches": 100,
+      "avgInnings1Runs": 116,
+      "avgInnings2Runs": 95,
+      "avgInnings1Wickets": 7.5,
+      "avgInnings2Wickets": 6.2,
+      "highScoringGames": 1,
+      "lowScoringGames": 88,
+      "archetypeWinRates": {
+        "SUPERSTAR_DUELIST": {
+          "wins": 29,
+          "matches": 55,
+          "pct": 52.7
+        },
+        "MONEYBALL_CORE": {
+          "wins": 35,
+          "matches": 65,
+          "pct": 53.8
+        },
+        "DISCIPLINED_PRAGMATIST": {
+          "wins": 36,
+          "matches": 80,
+          "pct": 45
+        }
+      },
+      "teamWinRates": {
+        "CSK": 60,
+        "MI": 50,
+        "KKR": 55.6,
+        "RCB": 50,
+        "RR": 47.8,
+        "SRH": 58.3,
+        "DC": 45.5,
+        "PBKS": 47.1,
+        "GT": 47.8,
+        "LSG": 38.9
+      },
+      "winRateStdDev": 6.02
+    }
+  }
+}
