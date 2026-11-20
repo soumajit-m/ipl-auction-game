@@ -1,0 +1,24 @@
+name: Deploy to Hugging Face Space
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+jobs:
+  sync-to-huggingface:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout GitHub Repository
+        uses: actions/checkout@v4
+
+      - name: Deploy Clean Tree to Hugging Face Space
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout --orphan hf-clean
+          git add -A
+          git commit -m "deploy: automatic sync from GitHub (${{ github.sha }})"
+          git push --force https://soumajit-m:$HF_TOKEN@huggingface.co/spaces/soumajit-m/ipl-manager-game hf-clean:main
