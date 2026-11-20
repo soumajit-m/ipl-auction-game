@@ -91,12 +91,11 @@ export function processMatchWorkload(
   const injuredPlayers: InjuryReport[] = [];
   const recoveredPlayers: string[] = [];
 
-  // 1. Process recoveries and between-match stamina updates for all players in squad
+  // 1. Process recoveries and reset stamina for all squad players (stamina resets every match)
   for (const player of squad) {
     const maxStamina = player.stats?.staminaRecov ?? 80.0;
-    if (player.stamina === undefined) {
-      player.stamina = maxStamina;
-    }
+    // Stamina resets every match and does not pass to another match
+    player.stamina = maxStamina;
 
     const wasInjured = Boolean(
       player.isInjured ||
@@ -111,8 +110,7 @@ export function processMatchWorkload(
         player.isInjured = false;
         player.injuryMatchesRemaining = 0;
         player.injuryStatus = 0;
-        // Restore stamina to 80% of stats.staminaRecov
-        player.stamina = Math.round(0.80 * maxStamina * 10) / 10;
+        player.stamina = maxStamina;
         recoveredPlayers.push(player.id);
       } else {
         // Still sidelined
@@ -123,14 +121,7 @@ export function processMatchWorkload(
       continue;
     }
 
-    // Player was fit: apply between-match stamina recovery
-    if (playingXIIds.has(player.id)) {
-      // Natural rest recovery for active match players: +2.5 stamina
-      player.stamina = Math.round(Math.min(maxStamina, player.stamina + 2.5) * 10) / 10;
-    } else {
-      // Rest recovery for benched players: +15.0 stamina
-      player.stamina = Math.round(Math.min(maxStamina, player.stamina + 15.0) * 10) / 10;
-    }
+    // Player is fit
     player.isInjured = false;
     player.injuryMatchesRemaining = 0;
     player.injuryStatus = 0;
