@@ -448,10 +448,16 @@ export class MatchSimEngine {
     // [12] bowler_bowl
     f[12] = state.bowler.stats?.bowl ?? 68.0;
 
-    // [13] bowler_stamina_current
-    const bwl_overs = state.bowlerOversBowled;
+    // [13] bowler_stamina_current & fatigue scaling
     const bwl_stam_base = state.bowler.stats?.staminaRecov ?? 90.0;
-    f[13] = Math.max(20.0, 100.0 - (bwl_overs * 12.0) * (1.1 - bwl_stam_base / 100.0));
+    const bwl_current_stamina = state.bowler.stamina ?? bwl_stam_base;
+    f[13] = Math.max(20.0, Math.min(100.0, bwl_current_stamina));
+
+    // Clean striker and bowler fatigue: 1.0 - (currentStamina / player.stats.staminaRecov) [stays gently between 0.0 and 0.25]
+    const str_stam_base = state.striker.stats?.staminaRecov ?? 80.0;
+    const str_current_stamina = state.striker.stamina ?? str_stam_base;
+    const striker_fatigue = Math.max(0.0, Math.min(0.25, 1.0 - (str_current_stamina / str_stam_base)));
+    const bowler_fatigue = Math.max(0.0, Math.min(0.25, 1.0 - (bwl_current_stamina / bwl_stam_base)));
 
     // [14] bowler_varietyBias
     f[14] = state.bowler.tacticalSynergy?.varietyBias ?? 0.0;

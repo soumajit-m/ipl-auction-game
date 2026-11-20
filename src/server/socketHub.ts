@@ -2358,11 +2358,15 @@ export class SocketHub {
         bowlers = t.squad.filter(p => TeamMaker.isBowler(p));
       }
 
-      // Guard 3: Guarantee bowling capacity and reset physical workload & injury status
+      // Guard 3: Guarantee bowling capacity and initialize baseline stamina & injury status
       TeamMaker.ensureSquadBowlingCapacity(t.squad);
       for (const p of t.squad) {
-        p.workload = 0.0;
+        const baseStam = p.stats?.staminaRecov ?? 80.0;
+        p.stamina = baseStam;
+        p.isInjured = false;
+        p.injuryMatchesRemaining = 0;
         p.injuryStatus = 0;
+        p.workload = 0.0;
       }
     }
 
@@ -3035,17 +3039,10 @@ export class SocketHub {
         const resWorkloadA = processMatchWorkload(teamA.squad, activeIdsA, teamA.franchiseId);
         const resWorkloadB = processMatchWorkload(teamB.squad, activeIdsB, teamB.franchiseId);
 
-        // Process team A injuries & replacements
+        // Process team A injuries & recoveries
         for (const inj of resWorkloadA.injuredPlayers) {
-          if (inj.level === 'LEVEL_3_RULED_OUT') {
-            const rep = signInjuryReplacement(teamA.squad, inj.playerId, unsoldPool);
-            if (rep.success && rep.replacementPlayer) {
-              this.pushCommentary(room, `🚑 INJURY UPDATE: ${inj.playerName} (${teamA.name}) is ruled out for the tournament. Replacement signed: ${rep.replacementPlayer.name} (${rep.replacementPlayer.role})!`);
-            } else {
-              this.pushCommentary(room, `🚑 INJURY UPDATE: ${inj.playerName} (${teamA.name}) is ruled out for the tournament.`);
-            }
-          } else if (inj.level === 'LEVEL_2_STRAIN') {
-            this.pushCommentary(room, `🩹 INJURY: ${inj.playerName} (${teamA.name}) suffered a muscle strain and will miss 3 matches.`);
+          if (inj.level === 'LEVEL_2_STRAIN') {
+            this.pushCommentary(room, `🩹 INJURY: ${inj.playerName} (${teamA.name}) suffered a muscle strain and will miss ${inj.matchesOut} matches.`);
           } else if (inj.level === 'LEVEL_1_NIGGLE') {
             this.pushCommentary(room, `⚠️ NIGGLE: ${inj.playerName} (${teamA.name}) experienced soreness and will rest 1 match.`);
           }
@@ -3057,17 +3054,10 @@ export class SocketHub {
           }
         }
 
-        // Process team B injuries & replacements
+        // Process team B injuries & recoveries
         for (const inj of resWorkloadB.injuredPlayers) {
-          if (inj.level === 'LEVEL_3_RULED_OUT') {
-            const rep = signInjuryReplacement(teamB.squad, inj.playerId, unsoldPool);
-            if (rep.success && rep.replacementPlayer) {
-              this.pushCommentary(room, `🚑 INJURY UPDATE: ${inj.playerName} (${teamB.name}) is ruled out for the tournament. Replacement signed: ${rep.replacementPlayer.name} (${rep.replacementPlayer.role})!`);
-            } else {
-              this.pushCommentary(room, `🚑 INJURY UPDATE: ${inj.playerName} (${teamB.name}) is ruled out for the tournament.`);
-            }
-          } else if (inj.level === 'LEVEL_2_STRAIN') {
-            this.pushCommentary(room, `🩹 INJURY: ${inj.playerName} (${teamB.name}) suffered a muscle strain and will miss 3 matches.`);
+          if (inj.level === 'LEVEL_2_STRAIN') {
+            this.pushCommentary(room, `🩹 INJURY: ${inj.playerName} (${teamB.name}) suffered a muscle strain and will miss ${inj.matchesOut} matches.`);
           } else if (inj.level === 'LEVEL_1_NIGGLE') {
             this.pushCommentary(room, `⚠️ NIGGLE: ${inj.playerName} (${teamB.name}) experienced soreness and will rest 1 match.`);
           }

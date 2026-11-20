@@ -80,7 +80,10 @@ export interface IPLPlayer {
   tacticalSynergy?: TacticalSynergyVector;
   historical: HistoricalPerfSummary;
   workload?: number;          // [0..100] Cumulative workload index across tournament
-  injuryStatus?: number;      // 0: Healthy, 1: 1 Match Pause, 3: 3 Match Pause, -1: Ruled Out
+  injuryStatus?: number;      // 0: Healthy, 1: 1 Match Pause, 2: 2 Match Pause
+  stamina?: number;           // Current stamina points [0..staminaRecov]
+  isInjured?: boolean;        // true if player is currently sidelined by injury
+  injuryMatchesRemaining?: number; // 1 or 2 matches remaining until full recovery
 }
 
 /**

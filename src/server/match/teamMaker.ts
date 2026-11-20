@@ -697,17 +697,47 @@ export class TeamMaker {
 
     TeamMaker.ensureSquadBowlingCapacity(squad);
 
-    // Filter available uninjured & un-fatigued players (injuryStatus <= 0 and workload <= 80)
-    const isFit = (p: IPLPlayer) => {
-      const isInjured = (p.injuryStatus !== undefined && p.injuryStatus !== 0) || (injuryStatus && (injuryStatus[p.id] ?? 0) !== 0);
-      const isFatigued = (p.workload ?? 0) > 80;
-      return !isInjured && !isFatigued;
+    // 1. Identify Injured Players (Strictly Sidelined)
+    const isInjured = (p: IPLPlayer) => {
+      return Boolean(
+        p.isInjured ||
+        (p.injuryMatchesRemaining !== undefined && p.injuryMatchesRemaining > 0) ||
+        (p.injuryStatus !== undefined && p.injuryStatus !== 0) ||
+        (injuryStatus && (injuryStatus[p.id] ?? 0) !== 0)
+      );
     };
 
-    let availableSquad = squad.filter(isFit);
+    const healthyPlayers = squad.filter(p => !isInjured(p));
+
+    // 2. Identify Starters Needing Stamina Rest
+    // Only rest for stamina if currentStamina < (player.stats.staminaRecov - 12)
+    // AND a healthy replacement within 10 OVR is available in the squad
+    const shouldRestForStamina = (p: IPLPlayer) => {
+      const maxStam = p.stats?.staminaRecov ?? 80.0;
+      const curStam = p.stamina ?? maxStam;
+      if (curStam >= maxStam - 12) return false;
+
+      const pOvr = p.stats?.ovr ?? 70;
+      const isPBowler = TeamMaker.isBowler(p);
+
+      // Check if another healthy uninjured player exists within 10 OVR of same general capability
+      const hasReplacement = healthyPlayers.some(rep => {
+        if (rep.id === p.id) return false;
+        if (p.role === 'WK' && rep.role !== 'WK') return false;
+        if (isPBowler && !TeamMaker.isBowler(rep)) return false;
+        const repOvr = rep.stats?.ovr ?? 70;
+        return repOvr >= pOvr - 10;
+      });
+
+      return hasReplacement;
+    };
+
+    let availableSquad = healthyPlayers.filter(p => !shouldRestForStamina(p));
+
+    // If resting players causes available squad to drop below 11, bring back the least fatigued
     if (availableSquad.length < 11) {
-      const rest = squad.filter(p => !isFit(p)).sort((a, b) => (a.workload ?? 0) - (b.workload ?? 0));
-      for (const p of rest) {
+      const rested = healthyPlayers.filter(p => shouldRestForStamina(p)).sort((a, b) => (b.stamina ?? 80) - (a.stamina ?? 80));
+      for (const p of rested) {
         if (!availableSquad.some(x => x.id === p.id)) {
           availableSquad.push(p);
           if (availableSquad.length >= 11) break;
@@ -715,7 +745,7 @@ export class TeamMaker {
       }
     }
     if (availableSquad.length < 11) {
-      availableSquad = squad;
+      availableSquad = healthyPlayers.length >= 11 ? healthyPlayers : squad;
     }
 
     const paceWeight = (homePitch?.pace ?? 0) * 8;

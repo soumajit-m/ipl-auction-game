@@ -443,6 +443,23 @@ export class FullMatchSimulator {
 
       bowlingFigures[bowlerPlayer.name] = overResult.bowlerAfterOver;
 
+      // Simplified Per-Over Stamina Drain:
+      // - Active batters at the crease: -0.5 stamina
+      // - Active bowler: -0.5 stamina
+      // - All other players in Playing 11 (fielders / dugout): -0.1 stamina
+      for (const p of battingLineup) {
+        const isAtCrease = p.id === strikerPlayer.id || p.id === nonStrikerPlayer.id;
+        const drain = isAtCrease ? 0.5 : 0.1;
+        const cur = p.stamina ?? p.stats?.staminaRecov ?? 80.0;
+        p.stamina = Math.round(Math.max(0, cur - drain) * 10) / 10;
+      }
+      for (const p of fieldingLineup) {
+        const isBowling = p.id === bowlerPlayer.id;
+        const drain = isBowling ? 0.5 : 0.1;
+        const cur = p.stamina ?? p.stats?.staminaRecov ?? 80.0;
+        p.stamina = Math.round(Math.max(0, cur - drain) * 10) / 10;
+      }
+
       const overFours = overResult.balls ? overResult.balls.filter(b => b.runsOffBat === 4).length : 0;
       const overSixes = overResult.balls ? overResult.balls.filter(b => b.runsOffBat === 6).length : 0;
       const overDots = overResult.balls ? overResult.balls.filter(b => b.runsOffBat === 0 && !b.extras && !b.isWicket).length : 0;

@@ -3032,7 +3032,11 @@ export default function SeasonHubPage() {
                                 {TeamMaker.isBowler(p) && <span className="text-[9px] px-1.5 py-0.5 rounded bg-brand-emerald/20 text-brand-emerald font-bold">BOWL</span>}
                                 {p.injuryStatus === 1 && <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 font-bold border border-amber-500/30">🩹 Niggle (Out 1M)</span>}
                                 {p.injuryStatus !== undefined && p.injuryStatus > 1 && <span className="text-[9px] px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-400 font-bold border border-rose-500/30">🚑 Strain ({p.injuryStatus}M)</span>}
-                                {p.injuryStatus === -1 && <span className="text-[9px] px-1.5 py-0.5 rounded bg-red-950/70 text-red-400 font-bold border border-red-500/40">❌ Ruled Out</span>}
+                                {p.stamina !== undefined && (
+                                  <span className="text-[9px] px-1.5 py-0.5 rounded bg-sky-500/15 text-sky-300 font-mono font-bold border border-sky-500/20" title="Stamina / Capacity">
+                                    🔋 {p.stamina.toFixed(1)} / {p.stats?.staminaRecov ?? 80}
+                                  </span>
+                                )}
                               </div>
                               <div className="text-[10px] text-slate-400 font-mono mt-0.5">
                                 {p.role} • OVR {p.stats.ovr} • BAT {p.stats.bat} • BOWL {p.stats.bowl} • PWR {p.stats.power}
@@ -3079,9 +3083,10 @@ export default function SeasonHubPage() {
                                 {TeamMaker.isBowler(p) && <span className="text-[9px] px-1.5 py-0.5 rounded bg-brand-emerald/20 text-brand-emerald font-bold">BOWL</span>}
                                 {p.injuryStatus === 1 && <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 font-bold border border-amber-500/30">🩹 Niggle (Out 1M)</span>}
                                 {p.injuryStatus !== undefined && p.injuryStatus > 1 && <span className="text-[9px] px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-400 font-bold border border-rose-500/30">🚑 Strain ({p.injuryStatus}M)</span>}
-                                {p.injuryStatus === -1 && <span className="text-[9px] px-1.5 py-0.5 rounded bg-red-950/70 text-red-400 font-bold border border-red-500/40">❌ Ruled Out</span>}
-                                {p.workload !== undefined && p.workload > 70 && !p.injuryStatus && (
-                                  <span className="text-[9px] px-1.5 py-0.5 rounded bg-yellow-500/10 text-yellow-500 font-mono">⚡ {Math.round(p.workload)}% load</span>
+                                {p.stamina !== undefined && (
+                                  <span className="text-[9px] px-1.5 py-0.5 rounded bg-sky-500/15 text-sky-300 font-mono font-bold border border-sky-500/20" title="Stamina / Capacity">
+                                    🔋 {p.stamina.toFixed(1)} / {p.stats?.staminaRecov ?? 80}
+                                  </span>
                                 )}
                               </div>
                               <div className="text-[10px] text-slate-500 font-mono mt-0.5">
