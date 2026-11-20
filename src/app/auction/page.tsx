@@ -30,6 +30,229 @@ import {
 } from 'lucide-react';
 import { getNextBidIncrement as getDynamicBidIncrement, getHumanMinPurseReserve } from '@/types/auction.types';
 
+// ---------------------------------------------------------------------------
+// MEMOIZED ROW COMPONENTS FOR STABLE, FLICKER-FREE POOL & ROSTER RENDERING
+// ---------------------------------------------------------------------------
+
+interface PlayerPoolTableRowProps {
+  player: any;
+  status: 'SOLD' | 'UNSOLD' | 'LIVE' | 'QUEUED';
+  soldPrice?: number;
+  soldToName?: string;
+  isLive: boolean;
+  currentPrice: number;
+  currentBidderName?: string;
+}
+
+const PlayerPoolTableRow = React.memo(function PlayerPoolTableRow({
+  player: p,
+  status: st,
+  soldPrice,
+  soldToName,
+  isLive,
+  currentPrice,
+  currentBidderName
+}: PlayerPoolTableRowProps) {
+  const isSold = st === 'SOLD';
+  const isUnsold = st === 'UNSOLD';
+  const isQueued = st === 'QUEUED';
+
+  const ovr = p.stats?.ovr || 75;
+  const ovrColor =
+    ovr >= 88
+      ? 'bg-brand-gold text-slate-950 font-black'
+      : ovr >= 80
+      ? 'bg-brand-emerald/20 text-brand-emerald border border-brand-emerald/40 font-bold'
+      : ovr >= 72
+      ? 'bg-sky-500/20 text-sky-300 border border-sky-500/40'
+      : 'bg-slate-800 text-slate-400 border border-borderDark';
+
+  return (
+    <tr
+      className={`hover:bg-subpill/40 ${
+        isLive
+          ? 'bg-amber-500/10'
+          : isSold
+          ? 'bg-emerald-500/[0.03]'
+          : isUnsold
+          ? 'bg-rose-500/[0.03]'
+          : ''
+      }`}
+      style={{ contain: 'layout paint' }}
+    >
+      {/* Row Number: Pure CSS Counter prevents re-rendering all rows on removal */}
+      <td className="py-2.5 px-4 text-slate-500 font-bold text-[11px] tabular-nums before:content-['#'_counter(row-counter)] [counter-increment:row-counter]" />
+
+      {/* Status Pill */}
+      <td className="py-2.5 px-3">
+        {isLive && (
+          <span className="px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/50 font-bold text-[10px] flex items-center gap-1 w-max">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+            LIVE NOW
+          </span>
+        )}
+        {isSold && (
+          <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 font-bold text-[10px] w-max block">
+            SOLD ✓
+          </span>
+        )}
+        {isUnsold && (
+          <span className="px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-400 border border-rose-500/40 font-bold text-[10px] w-max block">
+            UNSOLD
+          </span>
+        )}
+        {isQueued && (
+          <span className="px-2 py-0.5 rounded-full bg-sky-500/15 text-sky-300 border border-sky-500/30 text-[10px] font-bold w-max block">
+            QUEUED
+          </span>
+        )}
+      </td>
+
+      {/* Player Name & Badges */}
+      <td className="py-2.5 px-4 font-bold text-slate-200">
+        <div className="flex items-center gap-1.5">
+          <span>{p.name}</span>
+          {p.isOverseas && <span title="Overseas Player">✈️</span>}
+          {p.role === 'WK' && (
+            <span className="text-[9px] px-1 rounded bg-brand-cyan/20 text-brand-cyan font-bold">
+              WK
+            </span>
+          )}
+        </div>
+      </td>
+
+      {/* Role */}
+      <td className="py-2.5 px-3 text-center">
+        <span className="text-[10px] px-2 py-0.5 rounded bg-subpill text-slate-300 border border-borderDark">
+          {p.role}
+        </span>
+      </td>
+
+      {/* OVR Rating */}
+      <td className="py-2.5 px-3 text-center">
+        <span className={`inline-block px-2 py-0.5 rounded text-xs ${ovrColor}`}>
+          {ovr}
+        </span>
+      </td>
+
+      {/* Attributes */}
+      <td className="py-2.5 px-4 hidden sm:table-cell text-slate-400 text-[11px] tabular-nums">
+        <span>BAT {p.stats?.bat || 50}</span>
+        <span className="text-slate-600 mx-1">•</span>
+        <span>BOWL {p.stats?.bowl || 50}</span>
+        <span className="text-slate-600 mx-1">•</span>
+        <span>PWR {p.stats?.power || 50}</span>
+      </td>
+
+      {/* Base Price */}
+      <td className="py-2.5 px-3 text-right text-slate-400 tabular-nums">
+        ₹{Number(p.basePrice || 0.50).toFixed(2)} Cr
+      </td>
+
+      {/* Auction Outcome */}
+      <td className="py-2.5 px-4 text-right">
+        {isSold ? (
+          <div>
+            <span className="font-bold text-brand-gold tabular-nums">
+              ₹{Number(soldPrice).toFixed(2)} Cr
+            </span>
+            <div className="text-[10px] text-emerald-400 font-bold truncate max-w-[140px] ml-auto">
+              {soldToName}
+            </div>
+          </div>
+        ) : isLive ? (
+          <div>
+            <span className="font-bold text-amber-400 tabular-nums">
+              ₹{Number(currentPrice).toFixed(2)} Cr
+            </span>
+            <div className="text-[10px] text-slate-400 truncate max-w-[140px] ml-auto">
+              {currentBidderName ? `Bid by ${currentBidderName}` : 'Opening Base'}
+            </div>
+          </div>
+        ) : isUnsold ? (
+          <span className="text-slate-500 italic text-[11px]">Passed</span>
+        ) : (
+          <span className="text-sky-400/80 text-[11px]">Awaiting Call</span>
+        )}
+      </td>
+    </tr>
+  );
+});
+
+const RemainingPoolRow = React.memo(function RemainingPoolRow({
+  player: p
+}: {
+  player: any;
+}) {
+  return (
+    <div className="py-1.5 px-1.5 flex items-center justify-between text-xs hover:bg-canvas/40 rounded gap-2" style={{ contain: 'layout paint' }}>
+      <div className="min-w-0 flex-1">
+        <div className="font-medium text-slate-200 flex items-center gap-1.5 truncate">
+          <span className="truncate">{p.name}</span>
+          {p.isOverseas && <span className="text-[10px] shrink-0" title="Overseas">✈️</span>}
+          <span className="text-[10px] text-slate-500 font-mono shrink-0">SET {p.marqueeSet || 1} • {p.role}</span>
+        </div>
+        <div className="flex items-center gap-2 text-[10.5px] font-mono text-slate-400 mt-0.5 tabular-nums">
+          <span className="text-amber-400 font-semibold">OVR {p.stats?.ovr ?? 75}</span>
+          <span className="text-slate-600 text-[9px]">•</span>
+          <span>BAT <strong className="text-slate-200 font-medium">{p.stats?.bat ?? 70}</strong></span>
+          <span className="text-slate-600 text-[9px]">•</span>
+          <span>BWL <strong className="text-slate-200 font-medium">{p.stats?.bowl ?? 70}</strong></span>
+          <span className="text-slate-600 text-[9px]">•</span>
+          <span>PWR <strong className="text-slate-200 font-medium">{p.stats?.power ?? 70}</strong></span>
+        </div>
+      </div>
+      <div className="text-right shrink-0">
+        <div className="font-mono text-xs font-bold text-slate-300 tabular-nums">
+          ₹{Number(p.basePrice).toFixed(2)} Cr
+        </div>
+        <div className="text-[9px] font-mono text-sky-400">
+          SET {p.marqueeSet || 1}
+        </div>
+      </div>
+    </div>
+  );
+});
+
+const BoughtRosterRow = React.memo(function BoughtRosterRow({
+  player: p,
+  soldPrice,
+  index
+}: {
+  player: any;
+  soldPrice: number;
+  index: number;
+}) {
+  return (
+    <div className="py-1.5 px-1.5 flex items-center justify-between text-xs hover:bg-canvas/40 rounded gap-2" style={{ contain: 'layout paint' }}>
+      <div className="min-w-0 flex-1">
+        <div className="font-medium text-slate-200 flex items-center gap-1.5 truncate">
+          <span className="truncate">{p.name}</span>
+          {p.isOverseas && <span className="text-[10px] shrink-0" title="Overseas">✈️</span>}
+          <span className="text-[10px] text-slate-500 font-mono shrink-0">#{index + 1} • {p.role}</span>
+        </div>
+        <div className="flex items-center gap-2 text-[10.5px] font-mono text-slate-400 mt-0.5 tabular-nums">
+          <span className="text-amber-400 font-semibold">OVR {p.stats?.ovr ?? 75}</span>
+          <span className="text-slate-600 text-[9px]">•</span>
+          <span>BAT <strong className="text-slate-200 font-medium">{p.stats?.bat ?? 70}</strong></span>
+          <span className="text-slate-600 text-[9px]">•</span>
+          <span>BWL <strong className="text-slate-200 font-medium">{p.stats?.bowl ?? 70}</strong></span>
+          <span className="text-slate-600 text-[9px]">•</span>
+          <span>PWR <strong className="text-slate-200 font-medium">{p.stats?.power ?? 70}</strong></span>
+        </div>
+      </div>
+      <div className="text-right shrink-0">
+        <div className="font-mono text-xs font-bold text-brand-gold tabular-nums">
+          ₹{Number(soldPrice).toFixed(2)} Cr
+        </div>
+        <div className="text-[9px] font-mono text-slate-500">
+          SOLD
+        </div>
+      </div>
+    </div>
+  );
+});
+
 export default function AuctionArenaPage() {
   const router = useRouter();
   const {
@@ -331,7 +554,14 @@ export default function AuctionArenaPage() {
     }
 
     return statusMap;
-  }, [roomState?.completedLots, teams, currentLot]);
+  }, [
+    roomState?.completedLots,
+    teams,
+    currentLot?.player?.id,
+    currentLot?.currentPrice,
+    currentLot?.currentBidder,
+    currentLot?.currentBidderName
+  ]);
 
   const poolCounts = useMemo(() => {
     let sold = 0;
@@ -392,29 +622,30 @@ export default function AuctionArenaPage() {
       const infoA = playerStatusMap.get(a.id);
       const infoB = playerStatusMap.get(b.id);
 
+      let diff = 0;
       if (poolSortBy === 'OVR_DESC') {
-        return (b.stats?.ovr || 0) - (a.stats?.ovr || 0);
-      }
-      if (poolSortBy === 'OVR_ASC') {
-        return (a.stats?.ovr || 0) - (b.stats?.ovr || 0);
-      }
-      if (poolSortBy === 'PRICE_DESC') {
+        diff = (b.stats?.ovr || 0) - (a.stats?.ovr || 0);
+      } else if (poolSortBy === 'OVR_ASC') {
+        diff = (a.stats?.ovr || 0) - (b.stats?.ovr || 0);
+      } else if (poolSortBy === 'PRICE_DESC') {
         const priceA = infoA?.soldPrice ?? a.basePrice ?? 0;
         const priceB = infoB?.soldPrice ?? b.basePrice ?? 0;
-        return priceB - priceA;
-      }
-      if (poolSortBy === 'PRICE_ASC') {
+        diff = priceB - priceA;
+      } else if (poolSortBy === 'PRICE_ASC') {
         const priceA = infoA?.soldPrice ?? a.basePrice ?? 0;
         const priceB = infoB?.soldPrice ?? b.basePrice ?? 0;
-        return priceA - priceB;
+        diff = priceA - priceB;
+      } else if (poolSortBy === 'BASE_DESC') {
+        diff = (b.basePrice || 0) - (a.basePrice || 0);
+      } else if (poolSortBy === 'NAME_ASC') {
+        diff = a.name.localeCompare(b.name);
       }
-      if (poolSortBy === 'BASE_DESC') {
-        return (b.basePrice || 0) - (a.basePrice || 0);
-      }
-      if (poolSortBy === 'NAME_ASC') {
-        return a.name.localeCompare(b.name);
-      }
-      return 0;
+
+      if (diff !== 0) return diff;
+      // Stable deterministic tie-breaker: Set Number -> Name
+      const setDiff = (a.marqueeSet || 1) - (b.marqueeSet || 1);
+      if (setDiff !== 0) return setDiff;
+      return a.name.localeCompare(b.name);
     });
 
     return list;
@@ -1457,32 +1688,12 @@ export default function AuctionArenaPage() {
                   inspectingTeam.squad.map((p, idx) => {
                     const soldPrice = p.soldPrice ?? completedLotsMap.get(p.id) ?? p.basePrice;
                     return (
-                      <div key={p.id} className="py-1.5 px-1.5 flex items-center justify-between text-xs hover:bg-canvas/40 rounded transition-colors gap-2">
-                        <div className="min-w-0 flex-1">
-                          <div className="font-medium text-slate-200 flex items-center gap-1.5 truncate">
-                            <span className="truncate">{p.name}</span>
-                            {p.isOverseas && <span className="text-[10px] shrink-0" title="Overseas">✈️</span>}
-                            <span className="text-[10px] text-slate-500 font-mono shrink-0">#{idx + 1} • {p.role}</span>
-                          </div>
-                          <div className="flex items-center gap-2 text-[10.5px] font-mono text-slate-400 mt-0.5 tabular-nums">
-                            <span className="text-amber-400 font-semibold">OVR {p.stats?.ovr ?? 75}</span>
-                            <span className="text-slate-600 text-[9px]">•</span>
-                            <span>BAT <strong className="text-slate-200 font-medium">{p.stats?.bat ?? 70}</strong></span>
-                            <span className="text-slate-600 text-[9px]">•</span>
-                            <span>BWL <strong className="text-slate-200 font-medium">{p.stats?.bowl ?? 70}</strong></span>
-                            <span className="text-slate-600 text-[9px]">•</span>
-                            <span>PWR <strong className="text-slate-200 font-medium">{p.stats?.power ?? 70}</strong></span>
-                          </div>
-                        </div>
-                        <div className="text-right shrink-0">
-                          <div className="font-mono text-xs font-bold text-brand-gold tabular-nums">
-                            ₹{Number(soldPrice).toFixed(2)} Cr
-                          </div>
-                          <div className="text-[9px] font-mono text-slate-500">
-                            SOLD
-                          </div>
-                        </div>
-                      </div>
+                      <BoughtRosterRow
+                        key={p.id}
+                        player={p}
+                        soldPrice={soldPrice}
+                        index={idx}
+                      />
                     );
                   })
                 )
@@ -1492,33 +1703,11 @@ export default function AuctionArenaPage() {
                     Remaining pool is empty.<br />All auction lots completed.
                   </div>
                 ) : (
-                  remainingPoolPlayers.map((p, idx) => (
-                    <div key={p.id} className="py-1.5 px-1.5 flex items-center justify-between text-xs hover:bg-canvas/40 rounded transition-colors gap-2">
-                      <div className="min-w-0 flex-1">
-                        <div className="font-medium text-slate-200 flex items-center gap-1.5 truncate">
-                          <span className="truncate">{p.name}</span>
-                          {p.isOverseas && <span className="text-[10px] shrink-0" title="Overseas">✈️</span>}
-                          <span className="text-[10px] text-slate-500 font-mono shrink-0">#{idx + 1} • {p.role}</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-[10.5px] font-mono text-slate-400 mt-0.5 tabular-nums">
-                          <span className="text-amber-400 font-semibold">OVR {p.stats?.ovr ?? 75}</span>
-                          <span className="text-slate-600 text-[9px]">•</span>
-                          <span>BAT <strong className="text-slate-200 font-medium">{p.stats?.bat ?? 70}</strong></span>
-                          <span className="text-slate-600 text-[9px]">•</span>
-                          <span>BWL <strong className="text-slate-200 font-medium">{p.stats?.bowl ?? 70}</strong></span>
-                          <span className="text-slate-600 text-[9px]">•</span>
-                          <span>PWR <strong className="text-slate-200 font-medium">{p.stats?.power ?? 70}</strong></span>
-                        </div>
-                      </div>
-                      <div className="text-right shrink-0">
-                        <div className="font-mono text-xs font-bold text-slate-300 tabular-nums">
-                          ₹{Number(p.basePrice).toFixed(2)} Cr
-                        </div>
-                        <div className="text-[9px] font-mono text-sky-400">
-                          SET {p.marqueeSet || 1}
-                        </div>
-                      </div>
-                    </div>
+                  remainingPoolPlayers.map((p) => (
+                    <RemainingPoolRow
+                      key={p.id}
+                      player={p}
+                    />
                   ))
                 )
               )}
@@ -1720,7 +1909,7 @@ export default function AuctionArenaPage() {
                     <th className="py-2.5 px-4 text-right">AUCTION OUTCOME</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-borderDark/40">
+                <tbody className="divide-y divide-borderDark/40" style={{ counterReset: 'row-counter' }}>
                   {filteredPoolPlayers.length === 0 ? (
                     <tr>
                       <td colSpan={8} className="py-16 text-center text-slate-500 text-xs font-mono">
@@ -1728,135 +1917,21 @@ export default function AuctionArenaPage() {
                       </td>
                     </tr>
                   ) : (
-                    filteredPoolPlayers.map((p, idx) => {
+                    filteredPoolPlayers.map((p) => {
                       const info = playerStatusMap.get(p.id) || { status: 'QUEUED' };
                       const st = info.status;
                       const isLive = st === 'LIVE';
-                      const isSold = st === 'SOLD';
-                      const isUnsold = st === 'UNSOLD';
-                      const isQueued = st === 'QUEUED';
-
-                      const ovr = p.stats?.ovr || 75;
-                      const ovrColor =
-                        ovr >= 88
-                          ? 'bg-brand-gold text-slate-950 font-black'
-                          : ovr >= 80
-                          ? 'bg-brand-emerald/20 text-brand-emerald border border-brand-emerald/40 font-bold'
-                          : ovr >= 72
-                          ? 'bg-sky-500/20 text-sky-300 border border-sky-500/40'
-                          : 'bg-slate-800 text-slate-400 border border-borderDark';
-
                       return (
-                        <tr
+                        <PlayerPoolTableRow
                           key={p.id}
-                          className={`hover:bg-subpill/40 transition-colors ${
-                            isLive
-                              ? 'bg-amber-500/10'
-                              : isSold
-                              ? 'bg-emerald-500/[0.03]'
-                              : isUnsold
-                              ? 'bg-rose-500/[0.03]'
-                              : ''
-                          }`}
-                        >
-                          {/* Row Number */}
-                          <td className="py-2.5 px-4 text-slate-500 font-bold text-[11px]">
-                            #{idx + 1}
-                          </td>
-
-                          {/* Status Pill */}
-                          <td className="py-2.5 px-3">
-                            {isLive && (
-                              <span className="px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/50 font-bold text-[10px] flex items-center gap-1 w-max">
-                                <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
-                                LIVE NOW
-                              </span>
-                            )}
-                            {isSold && (
-                              <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 font-bold text-[10px] w-max block">
-                                SOLD ✓
-                              </span>
-                            )}
-                            {isUnsold && (
-                              <span className="px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-400 border border-rose-500/40 font-bold text-[10px] w-max block">
-                                UNSOLD
-                              </span>
-                            )}
-                            {isQueued && (
-                              <span className="px-2 py-0.5 rounded-full bg-sky-500/15 text-sky-300 border border-sky-500/30 text-[10px] font-bold w-max block">
-                                QUEUED
-                              </span>
-                            )}
-                          </td>
-
-                          {/* Player Name & Badges */}
-                          <td className="py-2.5 px-4 font-bold text-slate-200">
-                            <div className="flex items-center gap-1.5">
-                              <span>{p.name}</span>
-                              {p.isOverseas && <span title="Overseas Player">✈️</span>}
-                              {p.role === 'WK' && (
-                                <span className="text-[9px] px-1 rounded bg-brand-cyan/20 text-brand-cyan font-bold">
-                                  WK
-                                </span>
-                              )}
-                            </div>
-                          </td>
-
-                          {/* Role */}
-                          <td className="py-2.5 px-3 text-center">
-                            <span className="text-[10px] px-2 py-0.5 rounded bg-subpill text-slate-300 border border-borderDark">
-                              {p.role}
-                            </span>
-                          </td>
-
-                          {/* OVR Rating */}
-                          <td className="py-2.5 px-3 text-center">
-                            <span className={`inline-block px-2 py-0.5 rounded text-xs ${ovrColor}`}>
-                              {ovr}
-                            </span>
-                          </td>
-
-                          {/* Attributes */}
-                          <td className="py-2.5 px-4 hidden sm:table-cell text-slate-400 text-[11px]">
-                            <span>BAT {p.stats?.bat || 50}</span>
-                            <span className="text-slate-600 mx-1">•</span>
-                            <span>BOWL {p.stats?.bowl || 50}</span>
-                            <span className="text-slate-600 mx-1">•</span>
-                            <span>PWR {p.stats?.power || 50}</span>
-                          </td>
-
-                          {/* Base Price */}
-                          <td className="py-2.5 px-3 text-right text-slate-400">
-                            ₹{Number(p.basePrice || 0.50).toFixed(2)} Cr
-                          </td>
-
-                          {/* Auction Outcome */}
-                          <td className="py-2.5 px-4 text-right">
-                            {isSold ? (
-                              <div>
-                                <span className="font-bold text-brand-gold">
-                                  ₹{Number(info.soldPrice).toFixed(2)} Cr
-                                </span>
-                                <div className="text-[10px] text-emerald-400 font-bold truncate max-w-[140px] ml-auto">
-                                  {info.soldToName}
-                                </div>
-                              </div>
-                            ) : isLive ? (
-                              <div>
-                                <span className="font-bold text-amber-400 animate-pulse">
-                                  ₹{Number(currentPrice).toFixed(2)} Cr
-                                </span>
-                                <div className="text-[10px] text-slate-400 truncate max-w-[140px] ml-auto">
-                                  {currentLot?.currentBidderName ? `Bid by ${currentLot.currentBidderName}` : 'Opening Base'}
-                                </div>
-                              </div>
-                            ) : isUnsold ? (
-                              <span className="text-slate-500 italic text-[11px]">Passed</span>
-                            ) : (
-                              <span className="text-sky-400/80 text-[11px]">Awaiting Call</span>
-                            )}
-                          </td>
-                        </tr>
+                          player={p}
+                          status={st}
+                          soldPrice={info.soldPrice}
+                          soldToName={info.soldToName}
+                          isLive={isLive}
+                          currentPrice={isLive ? currentPrice : (info.soldPrice || p.basePrice || 0)}
+                          currentBidderName={isLive ? (currentLot?.currentBidderName || undefined) : undefined}
+                        />
                       );
                     })
                   )}
