@@ -113,7 +113,7 @@ export const useGameRoomStore = create<GameRoomStore>((set, get) => ({
     if (get().socket) return;
 
     const deviceUUID = getOrCreateDeviceUUID();
-    const wsUrl = typeof window !== 'undefined' ? window.location.origin : (process.env.NEXT_PUBLIC_WS_URL || 'http://localhost:3000');
+    const wsUrl = process.env.NEXT_PUBLIC_SOCKET_URL || process.env.NEXT_PUBLIC_WS_URL || (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000');
     const socket = io(wsUrl, {
       transports: ['websocket', 'polling'],
       autoConnect: true
