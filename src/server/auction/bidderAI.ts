@@ -528,6 +528,7 @@ export class AuctionBidderAI {
   public franchiseStates: Map<string, FranchiseRosterState> = new Map();
   public franchiseProfiles: Map<string, FranchiseAuctionProfile> = new Map();
   public affinities: Map<string, { name: string; franchise: string; isFranchiseIcon: boolean }> = new Map();
+  public lotNoiseMap: Map<string, number> = new Map();
 
   public config: AuctionEngineConfig = {
     determinismRatio: 0.45,
@@ -1215,6 +1216,20 @@ export class AuctionBidderAI {
     const hostAggressionMult = 1.0 + (0.45 - hostDeterminism) * 0.40;
     targetVal *= hostAggressionMult;
 
+    // AI Random Variation from Host Slider:
+    // User Formula: targetVal += lambda * (rand() * purse / 125) * (rand() > 50 ? -1 : 1.5)
+    // where lambda is the AI conservatism / aggression slider (determinismRatio) from the menu
+    const noiseKey = `${franchiseId}_${player.id}`;
+    let randomNoise = this.lotNoiseMap.get(noiseKey);
+    if (randomNoise === undefined) {
+      const lambda = hostDeterminism;
+      const purseRatio = (state.purseRemainingCr || 125.0) / 125.0;
+      const randSign = (Math.random() * 100 > 50) ? -1 : 1.5;
+      randomNoise = lambda * (Math.random() * purseRatio) * randSign;
+      this.lotNoiseMap.set(noiseKey, randomNoise);
+    }
+    targetVal += randomNoise;
+
     const ovr = player.stats?.ovr ?? 72;
 
     // Competitive Counter-Bidding (Host Checkbox: humanTaxEnabled)
@@ -1623,6 +1638,9 @@ export class AuctionBidderAI {
     soldPrice: number,
     humanSkipRatio: number = 0.0
   ): void {
+    // Clear lot noise map for the next player lot
+    this.lotNoiseMap.clear();
+
     const role = player.role;
     const vInt = this.vIntrinsicMap.get(player.id) || player.basePrice || 0.30;
 
