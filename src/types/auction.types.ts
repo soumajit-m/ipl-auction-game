@@ -107,10 +107,13 @@ export interface SanitizeRoomDTO {
   season?: SeasonState | null;
   skipVotes?: string[];
   setSkipVotes?: string[];
+  setSkipVotesCount?: number;
+  totalActiveHumans?: number;
   lastSetSummary?: string | null;
   isAuctionPaused?: boolean;
   auctionSpeedMultiplier?: number;
   hostId?: string;
+  hostDeviceUUID?: string;
 }
 
 /**

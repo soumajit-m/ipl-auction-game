@@ -44,6 +44,8 @@ export default function AuctionArenaPage() {
     updateLiveFilter,
     toggleManualSkip,
     hostAction,
+    hostAuth,
+    deviceUUID,
     isHost,
     saveStatus,
     errorMessage,
@@ -63,12 +65,19 @@ export default function AuctionArenaPage() {
   };
 
   const [inspectingTeamId, setInspectingTeamId] = useState<string>('CSK');
+  const [inspectorTab, setInspectorTab] = useState<'BOUGHT' | 'REMAINING'>('BOUGHT');
   const [saveSuccessMsg, setSaveSuccessMsg] = useState<string | null>(null);
   const [showSaveTick, setShowSaveTick] = useState(false);
   const [isBidLocked, setIsBidLocked] = useState(false);
   const [optimisticSkipped, setOptimisticSkipped] = useState<string | null>(null);
   const [skipAlert, setSkipAlert] = useState<string | null>(null);
   const [isDebugMode, setIsDebugMode] = useState(false);
+
+  const isStrictHost = Boolean(
+    (hostAuth?.token && hostAuth.hostId && roomState?.hostId && hostAuth.hostId === roomState.hostId) ||
+    (deviceUUID && roomState?.hostDeviceUUID && deviceUUID === roomState.hostDeviceUUID) ||
+    (isHost && (!roomState?.hostDeviceUUID || deviceUUID === roomState?.hostDeviceUUID))
+  );
 
   // Player Pool Master List Modal State
   const [allPlayers, setAllPlayers] = useState<any[]>([]);
@@ -411,6 +420,13 @@ export default function AuctionArenaPage() {
     return list;
   }, [allPlayers, playerStatusMap, poolStatusFilter, poolSetFilter, poolRoleFilter, poolOverseasOnly, poolSearch, poolSortBy, currentLot?.player?.marqueeSet]);
 
+  const remainingPoolPlayers = useMemo(() => {
+    return allPlayers.filter(p => {
+      const st = playerStatusMap.get(p.id)?.status || 'QUEUED';
+      return st === 'QUEUED';
+    });
+  }, [allPlayers, playerStatusMap]);
+
   const handlePlaceBid = () => {
     if (!currentLot || !myTeam || isBidLocked || currentLot.currentBidder === myTeamId || roomState?.isPaused || roomState?.isAuctionPaused) return;
     setIsBidLocked(true);
@@ -481,7 +497,9 @@ export default function AuctionArenaPage() {
     voteSkipAuction(!myTeamHasVoted);
   };
 
+  const totalActiveHumans = roomState?.totalActiveHumans || totalHumanCount || 1;
   const setSkipVotes = roomState?.setSkipVotes || [];
+  const setSkipVotesCount = roomState?.setSkipVotesCount ?? setSkipVotes.length;
   const myTeamHasVotedSetSkip = myTeamId ? setSkipVotes.includes(myTeamId) : false;
   const handleVoteSkipSet = () => {
     voteSkipSet(!myTeamHasVotedSetSkip, myTeamId || undefined, roomCode || undefined);
@@ -530,18 +548,14 @@ export default function AuctionArenaPage() {
             onClick={handleVoteSkipSet}
             className={`h-9 py-[7px] px-[15px] rounded-xl border text-xs font-mono font-bold transition-all flex items-center gap-1.5 shadow-sm active:scale-95 whitespace-nowrap ${
               myTeamHasVotedSetSkip
-                ? 'bg-sky-500/20 border-sky-400 text-sky-300 shadow-sky-500/20'
-                : 'bg-surfaceDark hover:bg-subpill text-slate-200 border-borderDark hover:border-sky-400/60'
+                ? 'bg-amber-500/20 border-amber-400 text-amber-300 shadow-amber-500/20'
+                : 'bg-surfaceDark hover:bg-subpill text-slate-200 border-borderDark hover:border-amber-400/60'
             }`}
             title="Vote to skip remaining players in current set. If all humans agree, AI franchises will silently bid and sign players via AI Mode A."
           >
             <FastForward className="w-3.5 h-3.5" />
             <span>
-              {myTeamHasVotedSetSkip
-                ? `Set Skipped (${setSkipVotes.length}/${totalHumanCount})`
-                : totalHumanCount > 1
-                ? `Skip Set (${setSkipVotes.length}/${totalHumanCount} Humans Agreed)`
-                : 'Skip Set'}
+              {`Skip Set (Votes: ${setSkipVotesCount} / ${totalActiveHumans})`}
             </span>
           </button>
 
@@ -577,46 +591,62 @@ export default function AuctionArenaPage() {
             </button>
           )}
 
-          {/* Persistent Auction Controls (Pause/Resume, 5x Speed, Save Game) */}
-          <div className="flex items-center gap-1.5">
-            <button
-              onClick={() => hostAction('TOGGLE_PAUSE')}
-              className={`h-9 py-[7px] px-[15px] rounded-xl border text-xs font-mono font-bold transition-all shadow-sm flex items-center gap-1.5 active:scale-95 whitespace-nowrap ${
-                roomState?.isPaused || roomState?.isAuctionPaused
-                  ? 'bg-amber-500/20 text-amber-300 border-amber-400/50'
-                  : 'bg-surfaceDark hover:bg-subpill border-borderDark text-slate-300'
-              }`}
-              title="Pause or resume auction countdown"
-            >
-              {roomState?.isPaused || roomState?.isAuctionPaused ? <Play className="w-3.5 h-3.5 fill-current text-brand-emerald" /> : <Pause className="w-3.5 h-3.5" />}
-              <span>{roomState?.isPaused || roomState?.isAuctionPaused ? 'Resume' : 'Pause'}</span>
-            </button>
+          {/* Persistent Auction Controls (Pause/Resume, 5x Speed, Save Game, Cloud Sync) */}
+          {isStrictHost ? (
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => hostAction('TOGGLE_PAUSE')}
+                className={`h-9 py-[7px] px-[15px] rounded-xl border text-xs font-mono font-bold transition-all shadow-sm flex items-center gap-1.5 active:scale-95 whitespace-nowrap ${
+                  roomState?.isPaused || roomState?.isAuctionPaused
+                    ? 'bg-amber-500/20 text-amber-300 border-amber-400/50'
+                    : 'bg-surfaceDark hover:bg-subpill border-borderDark text-slate-300'
+                }`}
+                title="Pause or resume auction countdown"
+              >
+                {roomState?.isPaused || roomState?.isAuctionPaused ? <Play className="w-3.5 h-3.5 fill-current text-brand-emerald" /> : <Pause className="w-3.5 h-3.5" />}
+                <span>{roomState?.isPaused || roomState?.isAuctionPaused ? 'Resume' : 'Pause'}</span>
+              </button>
 
-            <button
-              onClick={() => hostAction('TOGGLE_SPEED')}
-              className={`h-9 py-[7px] px-[15px] rounded-xl border text-xs font-mono font-bold transition-all shadow-sm flex items-center gap-1.5 active:scale-95 whitespace-nowrap ${
-                roomState?.auctionSpeedMultiplier === 5
-                  ? 'bg-amber-500/20 text-amber-300 border-amber-400/50 shadow-[0_0_10px_rgba(245,158,11,0.2)]'
-                  : 'bg-surfaceDark hover:bg-subpill border-borderDark text-slate-300'
-              }`}
-              title="Toggle 5x Turbo Auction Speed"
-            >
-              <span>5x Turbo Speed</span>
-            </button>
+              <button
+                onClick={() => hostAction('TOGGLE_SPEED')}
+                className={`h-9 py-[7px] px-[15px] rounded-xl border text-xs font-mono font-bold transition-all shadow-sm flex items-center gap-1.5 active:scale-95 whitespace-nowrap ${
+                  roomState?.auctionSpeedMultiplier === 5
+                    ? 'bg-amber-500/20 text-amber-300 border-amber-400/50 shadow-[0_0_10px_rgba(245,158,11,0.2)]'
+                    : 'bg-surfaceDark hover:bg-subpill border-borderDark text-slate-300'
+                }`}
+                title="Toggle 5x Turbo Auction Speed"
+              >
+                <span>5x Turbo Speed</span>
+              </button>
 
-            <button
-              onClick={handleForceSave}
-              className="h-9 py-[7px] px-[15px] rounded-xl bg-surfaceDark hover:bg-subpill border border-borderDark text-xs font-mono font-bold text-slate-300 transition-all shadow-sm flex items-center gap-1.5 active:scale-95 whitespace-nowrap"
-            >
-              <Save className="w-3.5 h-3.5 text-brand-cyan" />
-              <span>Save Game</span>
-            </button>
-          </div>
+              <button
+                onClick={handleForceSave}
+                className="h-9 py-[7px] px-[15px] rounded-xl bg-surfaceDark hover:bg-subpill border border-borderDark text-xs font-mono font-bold text-slate-300 transition-all shadow-sm flex items-center gap-1.5 active:scale-95 whitespace-nowrap"
+              >
+                <Save className="w-3.5 h-3.5 text-brand-cyan" />
+                <span>Save Game</span>
+              </button>
 
-          <div className="hidden lg:flex items-center gap-1.5 px-2.5 h-9 rounded-xl bg-canvas border border-borderDark text-[11px] font-mono text-slate-400 whitespace-nowrap">
-            <span className="w-1.5 h-1.5 rounded-full bg-brand-emerald" />
-            <span>CLOUD SYNCED</span>
-          </div>
+              <div className="hidden lg:flex items-center gap-1.5 px-2.5 h-9 rounded-xl bg-canvas border border-borderDark text-[11px] font-mono text-slate-400 whitespace-nowrap">
+                <span className="w-1.5 h-1.5 rounded-full bg-brand-emerald" />
+                <span>CLOUD SYNCED</span>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1.5">
+              {(roomState?.isPaused || roomState?.isAuctionPaused) ? (
+                <div className="h-9 px-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-mono font-medium flex items-center gap-1.5 whitespace-nowrap">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                  <span>Paused by Host</span>
+                </div>
+              ) : (
+                <div className="hidden lg:flex items-center gap-1.5 px-2.5 h-9 rounded-xl bg-canvas border border-borderDark text-[11px] font-mono text-slate-400 whitespace-nowrap">
+                  <span className="w-1.5 h-1.5 rounded-full bg-brand-emerald" />
+                  <span>Synced</span>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Player Pool Master List Popup Trigger Button */}
           <button
@@ -1372,52 +1402,134 @@ export default function AuctionArenaPage() {
 
           {/* Bento 3: Franchise Roster Inspector */}
           <div className="bg-tile border border-borderDark rounded-xl flex-1 flex flex-col min-h-0 overflow-hidden">
-            <div className="p-3 bg-canvas border-b border-borderDark flex items-center justify-between text-xs font-mono text-slate-400 shrink-0">
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-slate-200">ROSTER: {inspectingTeam?.name || inspectingTeamId}</span>
-                {(!mySeat || !mySeat.isHuman) && !inspectingTeam?.isHuman && (
-                  <button
-                    onClick={() => claimSeat(inspectingTeamId, 'Manager')}
-                    className="bg-brand-gold/20 hover:bg-brand-gold/30 text-brand-gold border border-brand-gold/40 text-[9px] font-mono px-2 py-0.5 rounded transition-all flex items-center gap-1"
-                    title="Take over this franchise and play live"
-                  >
-                    <span>Take Control</span>
-                  </button>
-                )}
+            <div className="px-3 py-2 bg-canvas border-b border-borderDark flex flex-col gap-2 shrink-0">
+              <div className="flex items-center justify-between text-xs font-mono text-slate-400">
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-slate-200">ROSTER: {inspectingTeam?.name || inspectingTeamId}</span>
+                  {(!mySeat || !mySeat.isHuman) && !inspectingTeam?.isHuman && (
+                    <button
+                      onClick={() => claimSeat(inspectingTeamId, 'Manager')}
+                      className="bg-brand-gold/20 hover:bg-brand-gold/30 text-brand-gold border border-brand-gold/40 text-[9px] font-mono px-2 py-0.5 rounded transition-all flex items-center gap-1"
+                      title="Take over this franchise and play live"
+                    >
+                      <span>Take Control</span>
+                    </button>
+                  )}
+                </div>
+                <span className="text-brand-gold font-bold">₹{inspectingTeam?.purse?.toFixed(2)} Cr</span>
               </div>
-              <span className="text-brand-gold font-bold">₹{inspectingTeam?.purse?.toFixed(2)} Cr</span>
+
+              {/* Inspector Tabs: Bought Roster & Remaining Pool */}
+              <div className="flex items-center gap-1 bg-surfaceDark/60 p-0.5 rounded-lg border border-borderDark/40">
+                <button
+                  type="button"
+                  onClick={() => setInspectorTab('BOUGHT')}
+                  className={`flex-1 py-1 px-2 rounded-md font-mono text-[11px] font-bold transition-all text-center ${
+                    inspectorTab === 'BOUGHT'
+                      ? 'bg-tile text-brand-gold shadow-sm'
+                      : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  Bought Roster ({inspectingTeam?.squad?.length || 0})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setInspectorTab('REMAINING')}
+                  className={`flex-1 py-1 px-2 rounded-md font-mono text-[11px] font-bold transition-all text-center ${
+                    inspectorTab === 'REMAINING'
+                      ? 'bg-tile text-brand-gold shadow-sm'
+                      : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  Remaining Pool ({remainingPoolPlayers.length})
+                </button>
+              </div>
             </div>
 
             <div className="flex-1 overflow-y-auto divide-y divide-borderDark/30 p-2">
-              {!inspectingTeam?.squad || inspectingTeam.squad.length === 0 ? (
-                <div className="p-8 text-center text-xs font-mono text-slate-600">
-                  Squad is currently empty.<br />Won lots will appear here.
-                </div>
-              ) : (
-                inspectingTeam.squad.map((p, idx) => {
-                  const soldPrice = p.soldPrice ?? completedLotsMap.get(p.id) ?? p.basePrice;
-                  return (
-                    <div key={p.id} className="py-2 px-1 flex items-center justify-between text-xs">
-                      <div>
-                        <div className="font-medium text-slate-200 flex items-center gap-1">
-                          <span>{p.name}</span>
-                          {p.isOverseas && <span className="text-[10px]">✈️</span>}
+              {inspectorTab === 'BOUGHT' ? (
+                !inspectingTeam?.squad || inspectingTeam.squad.length === 0 ? (
+                  <div className="p-8 text-center text-xs font-mono text-slate-600">
+                    Squad is currently empty.<br />Won lots will appear here.
+                  </div>
+                ) : (
+                  inspectingTeam.squad.map((p, idx) => {
+                    const soldPrice = p.soldPrice ?? completedLotsMap.get(p.id) ?? p.basePrice;
+                    return (
+                      <div key={p.id} className="py-1.5 px-1.5 flex items-center justify-between text-xs hover:bg-canvas/40 rounded transition-colors gap-2">
+                        <div className="min-w-0 flex-1">
+                          <div className="font-medium text-slate-200 flex items-center gap-1.5 truncate">
+                            <span className="truncate">{p.name}</span>
+                            {p.isOverseas && <span className="text-[10px] shrink-0" title="Overseas">✈️</span>}
+                            <span className="text-[10px] text-slate-500 font-mono shrink-0">#{idx + 1} • {p.role}</span>
+                          </div>
+                          <div className="flex items-center gap-1 font-mono text-[11px] tabular-nums mt-0.5">
+                            <span className="px-1 py-0.2 rounded bg-amber-500/15 text-amber-300 font-bold border border-amber-500/30" title="Overall">
+                              OVR {p.stats?.ovr ?? 75}
+                            </span>
+                            <span className="px-1 py-0.2 rounded bg-sky-500/15 text-sky-300 font-bold border border-sky-500/30" title="Batting">
+                              BAT {p.stats?.bat ?? 70}
+                            </span>
+                            <span className="px-1 py-0.2 rounded bg-emerald-500/15 text-emerald-300 font-bold border border-emerald-500/30" title="Bowling">
+                              BOWL {p.stats?.bowl ?? 70}
+                            </span>
+                            <span className="px-1 py-0.2 rounded bg-purple-500/15 text-purple-300 font-bold border border-purple-500/30" title="Power">
+                              PWR {p.stats?.power ?? 70}
+                            </span>
+                          </div>
                         </div>
-                        <div className="text-[10px] text-slate-500 font-mono">
-                          #{idx + 1} • {p.role} • OVR {p.stats.ovr}
+                        <div className="text-right shrink-0">
+                          <div className="font-mono text-xs font-bold text-brand-gold tabular-nums">
+                            ₹{Number(soldPrice).toFixed(2)} Cr
+                          </div>
+                          <div className="text-[9px] font-mono text-slate-500">
+                            SOLD
+                          </div>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <div className="font-mono text-xs font-bold text-brand-gold">
-                          ₹{Number(soldPrice).toFixed(2)} Cr
+                    );
+                  })
+                )
+              ) : (
+                remainingPoolPlayers.length === 0 ? (
+                  <div className="p-8 text-center text-xs font-mono text-slate-600">
+                    Remaining pool is empty.<br />All auction lots completed.
+                  </div>
+                ) : (
+                  remainingPoolPlayers.map((p, idx) => (
+                    <div key={p.id} className="py-1.5 px-1.5 flex items-center justify-between text-xs hover:bg-canvas/40 rounded transition-colors gap-2">
+                      <div className="min-w-0 flex-1">
+                        <div className="font-medium text-slate-200 flex items-center gap-1.5 truncate">
+                          <span className="truncate">{p.name}</span>
+                          {p.isOverseas && <span className="text-[10px] shrink-0" title="Overseas">✈️</span>}
+                          <span className="text-[10px] text-slate-500 font-mono shrink-0">#{idx + 1} • {p.role}</span>
                         </div>
-                        <div className="text-[9px] font-mono text-slate-500">
-                          SOLD
+                        <div className="flex items-center gap-1 font-mono text-[11px] tabular-nums mt-0.5">
+                          <span className="px-1 py-0.2 rounded bg-amber-500/15 text-amber-300 font-bold border border-amber-500/30" title="Overall">
+                            OVR {p.stats?.ovr ?? 75}
+                          </span>
+                          <span className="px-1 py-0.2 rounded bg-sky-500/15 text-sky-300 font-bold border border-sky-500/30" title="Batting">
+                            BAT {p.stats?.bat ?? 70}
+                          </span>
+                          <span className="px-1 py-0.2 rounded bg-emerald-500/15 text-emerald-300 font-bold border border-emerald-500/30" title="Bowling">
+                            BOWL {p.stats?.bowl ?? 70}
+                          </span>
+                          <span className="px-1 py-0.2 rounded bg-purple-500/15 text-purple-300 font-bold border border-purple-500/30" title="Power">
+                            PWR {p.stats?.power ?? 70}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <div className="font-mono text-xs font-bold text-slate-300 tabular-nums">
+                          ₹{Number(p.basePrice).toFixed(2)} Cr
+                        </div>
+                        <div className="text-[9px] font-mono text-sky-400">
+                          SET {p.marqueeSet || 1}
                         </div>
                       </div>
                     </div>
-                  );
-                })
+                  ))
+                )
               )}
             </div>
           </div>
@@ -1891,10 +2003,13 @@ export default function AuctionArenaPage() {
                           <tr>
                             <th className="py-2.5 px-4 w-12 text-slate-500">#</th>
                             <th className="py-2.5 px-4">PLAYER</th>
-                            <th className="py-2.5 px-3 w-20 text-center">ROLE</th>
-                            <th className="py-2.5 px-3 w-16 text-center">OVR</th>
-                            <th className="py-2.5 px-3 w-28 text-right">BASE PRICE</th>
-                            <th className="py-2.5 px-4 w-32 text-right">SOLD PRICE</th>
+                            <th className="py-2.5 px-2 w-16 text-center">ROLE</th>
+                            <th className="py-2.5 px-2 w-12 text-center" title="Overall Rating">OVR</th>
+                            <th className="py-2.5 px-2 w-12 text-center" title="Batting Skill">BAT</th>
+                            <th className="py-2.5 px-2 w-12 text-center" title="Bowling Skill">BOWL</th>
+                            <th className="py-2.5 px-2 w-12 text-center" title="Power Rating">PWR</th>
+                            <th className="py-2.5 px-3 w-24 text-right">BASE</th>
+                            <th className="py-2.5 px-4 w-28 text-right">SOLD PRICE</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-borderDark/40">
@@ -1909,18 +2024,27 @@ export default function AuctionArenaPage() {
                                     {p.isOverseas && <span className="text-[10px]" title="Overseas Player">✈️</span>}
                                   </div>
                                 </td>
-                                <td className="py-2 px-3 text-center">
+                                <td className="py-2 px-2 text-center">
                                   <span className="text-[10px] px-1.5 py-0.5 rounded bg-subpill text-slate-300 font-bold">
                                     {p.role}
                                   </span>
                                 </td>
-                                <td className="py-2 px-3 text-center font-bold text-brand-gold">
+                                <td className="py-2 px-2 text-center font-bold text-amber-400 tabular-nums">
                                   {p.stats?.ovr ?? 75}
                                 </td>
-                                <td className="py-2 px-3 text-right text-slate-400">
+                                <td className="py-2 px-2 text-center text-sky-300 tabular-nums">
+                                  {p.stats?.bat ?? 70}
+                                </td>
+                                <td className="py-2 px-2 text-center text-emerald-300 tabular-nums">
+                                  {p.stats?.bowl ?? 70}
+                                </td>
+                                <td className="py-2 px-2 text-center text-purple-300 tabular-nums">
+                                  {p.stats?.power ?? 70}
+                                </td>
+                                <td className="py-2 px-3 text-right text-slate-400 tabular-nums">
                                   ₹{p.basePrice?.toFixed(2)} Cr
                                 </td>
-                                <td className="py-2 px-4 text-right font-bold text-emerald-400">
+                                <td className="py-2 px-4 text-right font-bold text-emerald-400 tabular-nums">
                                   ₹{soldPrice?.toFixed(2)} Cr
                                 </td>
                               </tr>

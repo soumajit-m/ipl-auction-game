@@ -62,7 +62,7 @@ interface GameRoomStore {
   clearError: () => void;
 }
 
-function getOrCreateDeviceUUID(): string {
+export function getOrCreateDeviceUUID(): string {
   if (typeof window === 'undefined') return 'server_uuid';
   let uuid = localStorage.getItem('ipl_device_uuid');
   if (!uuid) {
@@ -322,6 +322,7 @@ export const useGameRoomStore = create<GameRoomStore>((set, get) => ({
         roomCode: cleanCode,
         deviceUUID,
         isHost: isHost || Boolean(hostAuth?.token),
+        token: hostAuth?.token,
         hostId: hostAuth?.hostId
       });
     }

@@ -47,6 +47,7 @@ export interface InternalRoomState {
   roomCode: string;
   hostId: string;
   hostUsername: string;
+  hostDeviceUUID?: string;
   hostSocketId: string | null;
   status: 'LOBBY' | 'WISHLIST' | 'AUCTION' | 'ANALYTICS' | 'SEASON';
   phase: AuctionPhase;
@@ -138,7 +139,8 @@ export class SocketHub {
     humanTaxEnabled: boolean = true,
     hostUsername: string = 'admin',
     aiAggression: number = 0.45,
-    simAlpha: number = 0.80
+    simAlpha: number = 0.80,
+    hostDeviceUUID?: string
   ): InternalRoomState {
     this.bidderAI.config.determinismRatio = aiAggression;
     this.bidderAI.config.humanTaxEnabled = humanTaxEnabled;
@@ -179,6 +181,7 @@ export class SocketHub {
       roomCode,
       hostId,
       hostUsername,
+      hostDeviceUUID,
       hostSocketId: null,
       status: 'LOBBY',
       phase: 'MAIN',
@@ -756,42 +759,58 @@ export class SocketHub {
       const lot = room.currentLot;
       if (lot && lot.state === 'OPEN') {
         if (allHumansHaveSkipped) {
-          this.clearAIBidTimeouts(room);
-          if (room.lotClockInterval) {
-            clearInterval(room.lotClockInterval);
-            room.lotClockInterval = null;
-          }
-
-          // Resolve lot among AI franchises via Mode A Vickrey
-          const outcome = this.bidderAI.resolveModeAVickrey(
-            room.roomCode,
-            room.teams,
-            lot.player,
-            room.lotQueue,
-            room.completedLots.length + 1,
-            room.phase,
-            lot.currentPrice
-          );
-
-          lot.biddingMode = 'MODE_A';
-          lot.modeAProvisionalWinner = outcome.winnerId;
-          lot.modeAProvisionalPrice = outcome.soldPrice;
-          lot.modeASecondHighestVal = outcome.secondValuation;
-
-          if (outcome.winnerId && outcome.soldPrice > 0) {
-            const winnerName = room.teams[outcome.winnerId]?.name || outcome.winnerId;
+          if (lot.currentBidder) {
+            // FIX 2: A bid has ALREADY been placed on this lot (by human or AI)!
+            // Do NOT wipe out the active leading bid or force-mark UNSOLD.
+            // Manager passed on further bidding; let eligible AI counter-bid up to their M_value ceiling.
+            const bidderTeam = room.teams[lot.currentBidder];
             this.pushCommentary(
               room,
-              `[SKIPPED BY MANAGER] AI franchises bid: ${lot.player.name} won by ${winnerName} for ₹${outcome.soldPrice.toFixed(2)} Cr.`
+              `[MANAGER SKIPPED] ${team?.name || 'Manager'} passed on further bids. Leading bid: ₹${lot.currentPrice.toFixed(2)} Cr by ${bidderTeam?.name || lot.currentBidder}.`
             );
+            // Schedule AI counter-bids against currentPrice
+            this.scheduleAICounterBids(room);
+            room.isDirty = true;
+            this.broadcastRoomState(room.roomCode);
           } else {
-            this.pushCommentary(
-              room,
-              `[SKIPPED BY MANAGER] No AI franchise placed a bid. ${lot.player.name} passed UNSOLD at base price ₹${lot.player.basePrice.toFixed(2)} Cr.`
-            );
-          }
+            // Nobody has bid yet on this lot when all humans skipped.
+            this.clearAIBidTimeouts(room);
+            if (room.lotClockInterval) {
+              clearInterval(room.lotClockInterval);
+              room.lotClockInterval = null;
+            }
 
-          this.commitCurrentLot(room);
+            // Resolve lot among AI franchises via Mode A Vickrey
+            const outcome = this.bidderAI.resolveModeAVickrey(
+              room.roomCode,
+              room.teams,
+              lot.player,
+              room.lotQueue,
+              room.completedLots.length + 1,
+              room.phase,
+              lot.currentPrice
+            );
+
+            lot.biddingMode = 'MODE_A';
+            lot.modeAProvisionalWinner = outcome.winnerId;
+            lot.modeAProvisionalPrice = outcome.soldPrice;
+            lot.modeASecondHighestVal = outcome.secondValuation;
+
+            if (outcome.winnerId && outcome.soldPrice > 0) {
+              const winnerName = room.teams[outcome.winnerId]?.name || outcome.winnerId;
+              this.pushCommentary(
+                room,
+                `[SKIPPED BY MANAGER] AI franchises bid: ${lot.player.name} won by ${winnerName} for ₹${outcome.soldPrice.toFixed(2)} Cr.`
+              );
+            } else {
+              this.pushCommentary(
+                room,
+                `[SKIPPED BY MANAGER] No AI franchise placed a bid. ${lot.player.name} passed UNSOLD at base price ₹${lot.player.basePrice.toFixed(2)} Cr.`
+              );
+            }
+
+            this.commitCurrentLot(room);
+          }
         } else {
           this.pushCommentary(room, `[SKIP] ${team?.name || 'Manager'} skipped ${lot.player.name}. Waiting for other managers or AI.`);
           room.isDirty = true;
@@ -812,8 +831,10 @@ export class SocketHub {
       if (!room) return;
 
       const isHost = Boolean(
-        (socket.data.isHost && (socket.id === room.hostSocketId || !room.seats.some(s => s.isHuman))) ||
-        (!room.seats.some(s => s.isHuman) && !room.hostSocketId)
+        socket.data.isHost && (
+          socket.id === room.hostSocketId ||
+          (socket.data.deviceUUID && room.hostDeviceUUID && socket.data.deviceUUID === room.hostDeviceUUID)
+        )
       );
 
       // Privileged host-only commands require verified host rights
@@ -829,7 +850,7 @@ export class SocketHub {
       ];
 
       if (privilegedActions.includes(data.action) && !isHost) {
-        socket.emit('error_message', { message: 'Unauthorized: Host privileges required for this action.' });
+        socket.emit('error_message', { code: 'UNAUTHORIZED_HOST_ONLY', message: 'Unauthorized: Host privileges required for this action.' });
         return;
       }
 
@@ -1006,6 +1027,69 @@ export class SocketHub {
       this.broadcastRoomState(room.roomCode);
     });
 
+    const verifyHostSocket = (targetRoom: InternalRoomState): boolean => {
+      return Boolean(
+        socket.data.isHost && (
+          socket.id === targetRoom.hostSocketId ||
+          (socket.data.deviceUUID && targetRoom.hostDeviceUUID && socket.data.deviceUUID === targetRoom.hostDeviceUUID)
+        )
+      );
+    };
+
+    socket.on('auction:toggle_pause', (data?: { roomCode?: string }) => {
+      const room = this.getRoom(data?.roomCode || socket.data.roomCode);
+      if (!room) return;
+      if (!verifyHostSocket(room)) {
+        socket.emit('error_message', { code: 'UNAUTHORIZED_HOST_ONLY', message: 'Unauthorized: Host privileges required to pause/resume auction.' });
+        return;
+      }
+      room.isPaused = !room.isPaused;
+      this.pushCommentary(room, room.isPaused ? '⏸️ Auction countdown paused by Host.' : '▶️ Auction countdown resumed by Host.');
+      room.isDirty = true;
+      this.broadcastRoomState(room.roomCode);
+    });
+
+    socket.on('auction:toggle_turbo', (data?: { roomCode?: string }) => {
+      const room = this.getRoom(data?.roomCode || socket.data.roomCode);
+      if (!room) return;
+      if (!verifyHostSocket(room)) {
+        socket.emit('error_message', { code: 'UNAUTHORIZED_HOST_ONLY', message: 'Unauthorized: Host privileges required to change auction speed.' });
+        return;
+      }
+      room.speedMultiplier = room.speedMultiplier === 5 ? 1 : 5;
+      this.pushCommentary(room, `⚡ Auction speed changed to ${room.speedMultiplier}x.`);
+      room.isDirty = true;
+      this.broadcastRoomState(room.roomCode);
+    });
+
+    socket.on('room:force_save', async (data?: { roomCode?: string }) => {
+      const room = this.getRoom(data?.roomCode || socket.data.roomCode);
+      if (!room) return;
+      if (!verifyHostSocket(room)) {
+        socket.emit('error_message', { code: 'UNAUTHORIZED_HOST_ONLY', message: 'Unauthorized: Host privileges required to save game.' });
+        return;
+      }
+      await this.flushRoomToMongoDB(room);
+      this.io.to(room.roomCode).emit('save_status', {
+        success: true,
+        timestamp: Date.now(),
+        message: 'Saved to Cloud ✓'
+      });
+    });
+
+    socket.on('season:toggle_auto_skip', (data?: { roomCode?: string }) => {
+      const room = this.getRoom(data?.roomCode || socket.data.roomCode);
+      if (!room || !room.season) return;
+      if (!verifyHostSocket(room)) {
+        socket.emit('error_message', { code: 'UNAUTHORIZED_HOST_ONLY', message: 'Unauthorized: Host privileges required to toggle auto-skip.' });
+        return;
+      }
+      room.season.autoSkipAI = !room.season.autoSkipAI;
+      this.pushCommentary(room, `⏩ Auto-Skip AI matches toggled to ${room.season.autoSkipAI ? 'ON' : 'OFF'}.`);
+      room.isDirty = true;
+      this.broadcastRoomState(room.roomCode);
+    });
+
     socket.on('set_sim_alpha', async (data?: { alpha?: number; roomCode?: string }) => {
       const targetRoomCode = data?.roomCode || socket.data.roomCode;
       const room = this.rooms.get(targetRoomCode);
@@ -1170,23 +1254,49 @@ export class SocketHub {
     // ==========================================
     // 7.5b. HUMAN VOTE SKIP SET (Unanimous Human Consent & Silent AI Mode A Resolution)
     // ==========================================
-    socket.on('vote_skip_set', async (data?: { agreed?: boolean; teamId?: string; roomCode?: string }) => {
+    const handleVoteSkipSet = async (data?: { agreed?: boolean; teamId?: string; roomCode?: string }) => {
       const room = this.getRoom(data?.roomCode || socket.data.roomCode);
       if (!room || room.status !== 'AUCTION') return;
 
-      this.pushCommentary(
-        room,
-        `[SET SKIP] Skip Set activated. Resolving remaining set lots with AI Mode A...`
-      );
+      const teamId = data?.teamId || socket.data.teamId;
+      if (!teamId) return;
 
-      await this.resolveEntireCurrentSetSilently(room);
-    });
+      if (!room.setSkipVotes) {
+        room.setSkipVotes = new Set<string>();
+      }
+
+      const activeHumanSeats = room.seats.filter(s => s.isHuman && s.connected);
+      const activeHumansCount = activeHumanSeats.length > 0
+        ? activeHumanSeats.length
+        : Object.values(room.teams).filter(t => t.isHuman).length || 1;
+
+      if (data?.agreed === false || room.setSkipVotes.has(teamId)) {
+        room.setSkipVotes.delete(teamId);
+        this.pushCommentary(room, `[SET SKIP] ${room.teams[teamId]?.name || teamId} withdrew vote to skip set (${room.setSkipVotes.size}/${activeHumansCount} agreed).`);
+      } else {
+        room.setSkipVotes.add(teamId);
+        this.pushCommentary(room, `[SET SKIP] ${room.teams[teamId]?.name || teamId} voted to skip set (${room.setSkipVotes.size}/${activeHumansCount} agreed).`);
+      }
+
+      if (room.setSkipVotes.size >= activeHumansCount && activeHumansCount > 0) {
+        this.pushCommentary(
+          room,
+          `[SET SKIP] 100% consensus reached (${room.setSkipVotes.size}/${activeHumansCount} managers). Resolving remaining set lots with AI Mode A...`
+        );
+        await this.resolveEntireCurrentSetSilently(room);
+      } else {
+        room.isDirty = true;
+        this.broadcastRoomState(room.roomCode);
+      }
+    };
+    socket.on('vote_skip_set', handleVoteSkipSet);
+    socket.on('auction:vote_skip_set', handleVoteSkipSet);
 
     // ==========================================
     // 7.6. ROOM RECONNECT & MID-AUCTION STATE RE-SYNC (Fix 6)
     // ==========================================
-    socket.on('room:join_or_sync', async (data: { roomCode: string; deviceUUID?: string; isHost?: boolean; token?: string }) => {
-      const { roomCode, deviceUUID, isHost: requestedHost, token } = data;
+    socket.on('room:join_or_sync', async (data: { roomCode: string; deviceUUID?: string; isHost?: boolean; token?: string; hostId?: string }) => {
+      const { roomCode, deviceUUID, isHost: requestedHost, token, hostId } = data;
       let room = this.getRoom(roomCode);
       if (!room && roomCode) {
         room = (await this.restoreRoomFromDB(roomCode.toUpperCase().trim())) || undefined;
@@ -1207,20 +1317,37 @@ export class SocketHub {
       socket.data.roomCode = cleanCode;
 
       let verifiedHost = false;
-      if (requestedHost && token) {
+      if (token) {
         const payload = verifyHostToken(token);
         if (payload && (payload.hostId === room.hostId || !room.seats.some(s => s.isHuman))) {
           verifiedHost = true;
         }
-      } else if (socket.id === room.hostSocketId && socket.data.isHost) {
+      }
+      if (!verifiedHost && hostId && room.hostId && hostId === room.hostId) {
         verifiedHost = true;
-      } else if (!room.seats.some(s => s.isHuman) && !room.hostSocketId) {
+      }
+      if (!verifiedHost && deviceUUID && room.hostDeviceUUID && deviceUUID === room.hostDeviceUUID) {
         verifiedHost = true;
+      }
+      if (!verifiedHost && socket.id === room.hostSocketId && socket.data.isHost) {
+        verifiedHost = true;
+      }
+      if (!verifiedHost && !room.seats.some(s => s.isHuman) && !room.hostSocketId) {
+        verifiedHost = true;
+      }
+
+      if (deviceUUID) {
+        socket.data.deviceUUID = deviceUUID;
       }
 
       if (verifiedHost) {
         socket.data.isHost = true;
         room.hostSocketId = socket.id;
+        if (deviceUUID && !room.hostDeviceUUID) {
+          room.hostDeviceUUID = deviceUUID;
+        }
+      } else {
+        socket.data.isHost = false;
       }
 
       // Re-bind human seat if deviceUUID matches
@@ -1707,6 +1834,7 @@ export class SocketHub {
           }));
         if (unsoldPlayers.length > 0) {
           room.phase = 'ACCELERATED_1';
+          if (room.setSkipVotes) room.setSkipVotes.clear();
           room.lotQueue = unsoldPlayers;
           this.pushCommentary(room, 'Main Round concluded. Accelerated Round 1 starting with halved/reduced base prices!');
           this.spawnNextLot(room);
@@ -1721,6 +1849,7 @@ export class SocketHub {
           }));
         if (unsoldPlayers.length > 0) {
           room.phase = 'ACCELERATED_2';
+          if (room.setSkipVotes) room.setSkipVotes.clear();
           room.lotQueue = unsoldPlayers;
           this.pushCommentary(room, 'Accelerated Round 1 concluded. Accelerated Round 2 starting!');
           this.spawnNextLot(room);
@@ -2000,8 +2129,8 @@ export class SocketHub {
     let soldPrice: number = 0;
 
     if (lot.biddingMode === 'MODE_A') {
-      winnerId = lot.modeAProvisionalWinner || null;
-      soldPrice = lot.modeAProvisionalPrice || 0;
+      winnerId = lot.modeAProvisionalWinner || lot.currentBidder || null;
+      soldPrice = (lot.modeAProvisionalWinner && lot.modeAProvisionalPrice) ? lot.modeAProvisionalPrice : (lot.currentPrice || 0);
     } else {
       winnerId = lot.currentBidder;
       soldPrice = lot.currentPrice;
@@ -2064,22 +2193,47 @@ export class SocketHub {
     if (room.currentLot) {
       const curPlayer = room.currentLot.player;
       if (Number(curPlayer.marqueeSet || 1) === currentSet) {
-        const outcome = this.bidderAI.resolveModeAVickrey(
-          room.roomCode,
-          room.teams,
-          curPlayer,
-          room.lotQueue,
-          room.completedLots.length + 1,
-          room.phase
-        );
-        if (outcome.winnerId && outcome.soldPrice > 0) {
-          this.bidderAI.commitLotSale(room.teams, curPlayer, outcome.winnerId, outcome.soldPrice);
-          room.completedLots.push({ player: curPlayer, soldPrice: outcome.soldPrice, soldTo: outcome.winnerId });
-          signedCount++;
+        if (room.currentLot.currentBidder) {
+          const leadId = room.currentLot.currentBidder;
+          const leadPrice = room.currentLot.currentPrice;
+          const inc = getNextBidIncrement(leadPrice);
+          const nextMinBid = Math.round((leadPrice + inc) * 100) / 100;
+          const outcome = this.bidderAI.resolveModeAVickrey(
+            room.roomCode,
+            room.teams,
+            curPlayer,
+            room.lotQueue,
+            room.completedLots.length + 1,
+            room.phase,
+            nextMinBid
+          );
+          if (outcome.winnerId && outcome.soldPrice >= nextMinBid) {
+            this.bidderAI.commitLotSale(room.teams, curPlayer, outcome.winnerId, outcome.soldPrice);
+            room.completedLots.push({ player: curPlayer, soldPrice: outcome.soldPrice, soldTo: outcome.winnerId });
+            signedCount++;
+          } else {
+            this.bidderAI.commitLotSale(room.teams, curPlayer, leadId, leadPrice);
+            room.completedLots.push({ player: curPlayer, soldPrice: leadPrice, soldTo: leadId });
+            signedCount++;
+          }
         } else {
-          this.bidderAI.commitLotSale(room.teams, curPlayer, null, 0);
-          room.completedLots.push({ player: curPlayer, soldPrice: null, soldTo: null });
-          unsoldCount++;
+          const outcome = this.bidderAI.resolveModeAVickrey(
+            room.roomCode,
+            room.teams,
+            curPlayer,
+            room.lotQueue,
+            room.completedLots.length + 1,
+            room.phase
+          );
+          if (outcome.winnerId && outcome.soldPrice > 0) {
+            this.bidderAI.commitLotSale(room.teams, curPlayer, outcome.winnerId, outcome.soldPrice);
+            room.completedLots.push({ player: curPlayer, soldPrice: outcome.soldPrice, soldTo: outcome.winnerId });
+            signedCount++;
+          } else {
+            this.bidderAI.commitLotSale(room.teams, curPlayer, null, 0);
+            room.completedLots.push({ player: curPlayer, soldPrice: null, soldTo: null });
+            unsoldCount++;
+          }
         }
       } else {
         // Put back at head of queue if not matching set
@@ -2891,7 +3045,7 @@ export class SocketHub {
               this.pushCommentary(room, `🚑 INJURY UPDATE: ${inj.playerName} (${teamA.name}) is ruled out for the tournament.`);
             }
           } else if (inj.level === 'LEVEL_2_STRAIN') {
-            this.pushCommentary(room, `🩹 INJURY: ${inj.playerName} (${teamA.name}) suffered a muscle strain and will miss ${inj.matchesOut} matches.`);
+            this.pushCommentary(room, `🩹 INJURY: ${inj.playerName} (${teamA.name}) suffered a muscle strain and will miss 3 matches.`);
           } else if (inj.level === 'LEVEL_1_NIGGLE') {
             this.pushCommentary(room, `⚠️ NIGGLE: ${inj.playerName} (${teamA.name}) experienced soreness and will rest 1 match.`);
           }
@@ -2913,7 +3067,7 @@ export class SocketHub {
               this.pushCommentary(room, `🚑 INJURY UPDATE: ${inj.playerName} (${teamB.name}) is ruled out for the tournament.`);
             }
           } else if (inj.level === 'LEVEL_2_STRAIN') {
-            this.pushCommentary(room, `🩹 INJURY: ${inj.playerName} (${teamB.name}) suffered a muscle strain and will miss ${inj.matchesOut} matches.`);
+            this.pushCommentary(room, `🩹 INJURY: ${inj.playerName} (${teamB.name}) suffered a muscle strain and will miss 3 matches.`);
           } else if (inj.level === 'LEVEL_1_NIGGLE') {
             this.pushCommentary(room, `⚠️ NIGGLE: ${inj.playerName} (${teamB.name}) experienced soreness and will rest 1 match.`);
           }

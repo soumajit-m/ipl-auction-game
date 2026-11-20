@@ -279,7 +279,8 @@ export default function EntryLobbyPage() {
           aiAggression: aiAggression,
           humanTaxEnabled: humanTax,
           minOvr: minPlayerOvr,
-          simAlpha: simAlpha
+          simAlpha: simAlpha,
+          hostDeviceUUID: typeof window !== 'undefined' ? localStorage.getItem('ipl_device_uuid') || undefined : undefined
         })
       });
       const data = await res.json();

@@ -1809,10 +1809,13 @@ export class AuctionBidderAI {
       season: rawRoom.season || null,
       skipVotes: rawRoom.skipVotes ? (Array.isArray(rawRoom.skipVotes) ? rawRoom.skipVotes : Array.from(rawRoom.skipVotes)) : [],
       setSkipVotes: rawRoom.setSkipVotes ? (Array.isArray(rawRoom.setSkipVotes) ? rawRoom.setSkipVotes : Array.from(rawRoom.setSkipVotes)) : [],
+      setSkipVotesCount: rawRoom.setSkipVotes ? (Array.isArray(rawRoom.setSkipVotes) ? rawRoom.setSkipVotes.length : rawRoom.setSkipVotes.size) : 0,
+      totalActiveHumans: (rawRoom.seats || []).filter((s: any) => s.isHuman && s.connected).length || Object.values(rawRoom.teams || {}).filter((t: any) => t.isHuman).length || 1,
       lastSetSummary: rawRoom.lastSetSummary || null,
       isAuctionPaused: Boolean(rawRoom.isPaused),
       auctionSpeedMultiplier: rawRoom.speedMultiplier || 1,
-      hostId: rawRoom.hostId
+      hostId: rawRoom.hostId,
+      hostDeviceUUID: rawRoom.hostDeviceUUID || rawRoom.hostId
     };
   }
 }

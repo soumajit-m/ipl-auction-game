@@ -816,11 +816,12 @@ export default function SeasonHubPage() {
     setTimeout(() => setSaveSuccessMsg(null), 3000);
   };
 
-  const isHostEffective = Boolean(
-    isHost ||
-    (roomState?.hostId && hostAuth?.hostId === roomState.hostId) ||
-    !Object.values(teams).some(t => t.isHuman && t.franchiseId !== myFranchiseId)
+  const isStrictHost = Boolean(
+    (hostAuth?.token && hostAuth.hostId && roomState?.hostId && hostAuth.hostId === roomState.hostId) ||
+    (deviceUUID && roomState?.hostDeviceUUID && deviceUUID === roomState.hostDeviceUUID) ||
+    (isHost && (!roomState?.hostDeviceUUID || deviceUUID === roomState?.hostDeviceUUID))
   );
+  const isHostEffective = isStrictHost;
 
   const handlePlayNextMatch = () => {
     setIsSimulating(true);
@@ -885,47 +886,57 @@ export default function SeasonHubPage() {
           )}
 
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => hostAction('FORCE_SAVE')}
-              className="h-9 py-[7px] px-[15px] rounded-xl bg-surfaceDark hover:bg-[#2C3246] border border-white/[0.08] text-xs font-mono font-bold text-slate-300 transition-all shadow-sm flex items-center gap-1.5 active:scale-95 whitespace-nowrap"
-              title="Force Save Room to MongoDB"
-            >
-              <Save className="w-3.5 h-3.5 text-brand-cyan" />
-              <span>Save Game</span>
-            </button>
+            {isStrictHost ? (
+              <>
+                <button
+                  onClick={() => hostAction('FORCE_SAVE')}
+                  className="h-9 py-[7px] px-[15px] rounded-xl bg-surfaceDark hover:bg-[#2C3246] border border-white/[0.08] text-xs font-mono font-bold text-slate-300 transition-all shadow-sm flex items-center gap-1.5 active:scale-95 whitespace-nowrap"
+                  title="Force Save Room to MongoDB"
+                >
+                  <Save className="w-3.5 h-3.5 text-brand-cyan" />
+                  <span>Save Game</span>
+                </button>
 
-            <button
-              onClick={() => hostAction('TOGGLE_AUTO_SKIP_AI')}
-              className={`h-9 py-[7px] px-[15px] rounded-xl text-xs font-mono font-bold border transition-all shadow-sm flex items-center gap-1.5 active:scale-95 whitespace-nowrap ${
-                season?.autoSkipAI
-                  ? 'bg-brand-emerald/15 border-brand-emerald/40 text-brand-emerald'
-                  : 'bg-surfaceDark hover:bg-[#2C3246] border-white/[0.08] text-slate-400'
-              }`}
-            >
-              <FastForward className="w-3.5 h-3.5" />
-              <span>Auto-Skip AI: {season?.autoSkipAI ? 'ON' : 'OFF'}</span>
-            </button>
+                <button
+                  onClick={() => hostAction('TOGGLE_AUTO_SKIP_AI')}
+                  className={`h-9 py-[7px] px-[15px] rounded-xl text-xs font-mono font-bold border transition-all shadow-sm flex items-center gap-1.5 active:scale-95 whitespace-nowrap ${
+                    season?.autoSkipAI
+                      ? 'bg-brand-emerald/15 border-brand-emerald/40 text-brand-emerald'
+                      : 'bg-surfaceDark hover:bg-[#2C3246] border-white/[0.08] text-slate-400'
+                  }`}
+                >
+                  <FastForward className="w-3.5 h-3.5" />
+                  <span>Auto-Skip AI: {season?.autoSkipAI ? 'ON' : 'OFF'}</span>
+                </button>
 
-            {/* Sim Alpha Setting Slider */}
-            <div
-              className="h-9 px-3 rounded-xl bg-surfaceDark border border-white/[0.08] text-xs font-mono font-bold flex items-center gap-2 shadow-sm"
-              title="Simulation Alpha (α): Scales batting SR by α and bowling Economy by (2 - α). Range: 0.50 to 1.50 (Default 0.80)"
-            >
-              <Sliders className="w-3.5 h-3.5 text-amber-400" />
-              <span className="text-slate-400 font-semibold text-[11px] whitespace-nowrap">α Alpha:</span>
-              <span className="text-amber-400 font-mono font-bold text-xs min-w-[2.2rem] text-center">
-                {simAlpha.toFixed(2)}
-              </span>
-              <input
-                type="range"
-                min="0.5"
-                max="1.5"
-                step="0.05"
-                value={simAlpha}
-                onChange={(e) => handleAlphaChange(parseFloat(e.target.value))}
-                className="w-20 accent-amber-400 cursor-pointer h-1.5 bg-slate-700 rounded-lg"
-              />
-            </div>
+                {/* Sim Alpha Setting Slider */}
+                <div
+                  className="h-9 px-3 rounded-xl bg-surfaceDark border border-white/[0.08] text-xs font-mono font-bold flex items-center gap-2 shadow-sm"
+                  title="Simulation Alpha (α): Scales batting SR by α and bowling Economy by (2 - α). Range: 0.50 to 1.50 (Default 0.80)"
+                >
+                  <Sliders className="w-3.5 h-3.5 text-amber-400" />
+                  <span className="text-slate-400 font-semibold text-[11px] whitespace-nowrap">α Alpha:</span>
+                  <span className="text-amber-400 font-mono font-bold text-xs min-w-[2.2rem] text-center">
+                    {simAlpha.toFixed(2)}
+                  </span>
+                  <input
+                    type="range"
+                    min="0.5"
+                    max="1.5"
+                    step="0.05"
+                    value={simAlpha}
+                    onChange={(e) => handleAlphaChange(parseFloat(e.target.value))}
+                    className="w-20 accent-amber-400 cursor-pointer h-1.5 bg-slate-700 rounded-lg"
+                  />
+                </div>
+              </>
+            ) : (
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-canvas border border-white/[0.08] text-xs font-mono text-slate-400 whitespace-nowrap">
+                <span className="w-2 h-2 rounded-full bg-brand-emerald" />
+                <span>Cloud Synced</span>
+                {season?.autoSkipAI && <span className="text-slate-500">• Auto-Skip AI: ON</span>}
+              </div>
+            )}
 
             {!allCompleted && nextFixture && (
               <button
