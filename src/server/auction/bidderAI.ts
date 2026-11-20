@@ -1750,6 +1750,7 @@ export class AuctionBidderAI {
         isHuman: t.isHuman,
         ownerName: t.ownerName,
         wishlistIds: t.isHuman ? t.wishlistIds : [],
+        skipLotIds: t.isHuman ? (t.skipLotIds || []) : [],
         connected: t.connected
       };
     }

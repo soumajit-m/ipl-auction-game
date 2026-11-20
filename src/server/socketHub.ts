@@ -744,43 +744,91 @@ export class SocketHub {
       if (team) {
         const playerId = room.currentLot.player.id;
         if (!team.skipLotIds) team.skipLotIds = [];
-        if (!team.skipLotIds.includes(playerId)) {
+        const existingIdx = team.skipLotIds.indexOf(playerId);
+        if (existingIdx !== -1) {
+          // Toggle off (unskip)
+          team.skipLotIds.splice(existingIdx, 1);
+          this.pushCommentary(room, `↩️ ${team.name || 'Manager'} un-skipped ${room.currentLot.player.name}.`);
+          room.isDirty = true;
+          this.broadcastRoomState(room.roomCode);
+          return;
+        } else {
           team.skipLotIds.push(playerId);
         }
       }
 
-      // Check if all active humans in the room have skipped this lot
-      const activeHumanSeats = room.seats.filter(s => s.isHuman && s.connected);
-      const allHumansHaveSkipped = activeHumanSeats.length <= 1 || activeHumanSeats.every(s => {
-        const hTeam = room.teams[s.teamId];
-        return hTeam && hTeam.skipLotIds && hTeam.skipLotIds.includes(room.currentLot!.player.id);
-      });
+      // Collect all active human team IDs
+      const activeHumanTeamIds = new Set<string>();
+      for (const s of room.seats) {
+        if (s.isHuman && (s.connected ?? true) && s.teamId) {
+          activeHumanTeamIds.add(s.teamId);
+        }
+      }
+      if (activeHumanTeamIds.size === 0) {
+        for (const t of Object.values(room.teams)) {
+          if (t.isHuman && (t.connected ?? true)) {
+            activeHumanTeamIds.add(t.franchiseId);
+          }
+        }
+      }
+
+      const activeHumanCount = Math.max(1, activeHumanTeamIds.size);
+      const skippedCount = Array.from(activeHumanTeamIds).filter(hId => {
+        const hTeam = room.teams[hId];
+        return Boolean(hTeam && hTeam.skipLotIds && hTeam.skipLotIds.includes(room.currentLot!.player.id));
+      }).length;
+
+      const allHumansHaveSkipped = activeHumanTeamIds.size > 0 && skippedCount >= activeHumanTeamIds.size;
 
       const lot = room.currentLot;
       if (lot && lot.state === 'OPEN') {
         if (allHumansHaveSkipped) {
+          // All active managers have skipped this player!
+          // Instantly clear all pending AI bid timeouts and stop the lot clock timer.
+          this.clearAIBidTimeouts(room);
+          if (room.lotClockInterval) {
+            clearInterval(room.lotClockInterval);
+            room.lotClockInterval = null;
+          }
+
           if (lot.currentBidder) {
-            // FIX 2: A bid has ALREADY been placed on this lot (by human or AI)!
-            // Do NOT wipe out the active leading bid or force-mark UNSOLD.
-            // Manager passed on further bidding; let eligible AI counter-bid up to their M_value ceiling.
-            const bidderTeam = room.teams[lot.currentBidder];
-            this.pushCommentary(
-              room,
-              `[MANAGER SKIPPED] ${team?.name || 'Manager'} passed on further bids. Leading bid: ₹${lot.currentPrice.toFixed(2)} Cr by ${bidderTeam?.name || lot.currentBidder}.`
+            // A bid has ALREADY been placed on this lot (by human or AI)!
+            // Check if any AI wants to outbid using Mode A Vickrey
+            const leadId = lot.currentBidder;
+            const leadPrice = lot.currentPrice;
+            const inc = getNextBidIncrement(leadPrice);
+            const nextMinBid = Math.round((leadPrice + inc) * 100) / 100;
+
+            const outcome = this.bidderAI.resolveModeAVickrey(
+              room.roomCode,
+              room.teams,
+              lot.player,
+              room.lotQueue,
+              room.completedLots.length + 1,
+              room.phase,
+              nextMinBid
             );
-            // Schedule AI counter-bids against currentPrice
-            this.scheduleAICounterBids(room);
-            room.isDirty = true;
-            this.broadcastRoomState(room.roomCode);
+
+            lot.biddingMode = 'MODE_A';
+            if (outcome.winnerId && outcome.soldPrice >= nextMinBid) {
+              lot.modeAProvisionalWinner = outcome.winnerId;
+              lot.modeAProvisionalPrice = outcome.soldPrice;
+              const winnerName = room.teams[outcome.winnerId]?.name || outcome.winnerId;
+              this.pushCommentary(
+                room,
+                `⚡ [SKIPPED] All managers skipped. AI outbid: ${lot.player.name} won by ${winnerName} for ₹${outcome.soldPrice.toFixed(2)} Cr.`
+              );
+            } else {
+              lot.modeAProvisionalWinner = leadId;
+              lot.modeAProvisionalPrice = leadPrice;
+              const winnerName = room.teams[leadId]?.name || leadId;
+              this.pushCommentary(
+                room,
+                `⚡ [SKIPPED] All managers skipped. ${lot.player.name} sold to leading bidder ${winnerName} for ₹${leadPrice.toFixed(2)} Cr.`
+              );
+            }
           } else {
             // Nobody has bid yet on this lot when all humans skipped.
-            this.clearAIBidTimeouts(room);
-            if (room.lotClockInterval) {
-              clearInterval(room.lotClockInterval);
-              room.lotClockInterval = null;
-            }
-
-            // Resolve lot among AI franchises via Mode A Vickrey
             const outcome = this.bidderAI.resolveModeAVickrey(
               room.roomCode,
               room.teams,
@@ -800,19 +848,23 @@ export class SocketHub {
               const winnerName = room.teams[outcome.winnerId]?.name || outcome.winnerId;
               this.pushCommentary(
                 room,
-                `[SKIPPED BY MANAGER] AI franchises bid: ${lot.player.name} won by ${winnerName} for ₹${outcome.soldPrice.toFixed(2)} Cr.`
+                `⚡ [SKIPPED] All managers skipped. ${lot.player.name} won by ${winnerName} for ₹${outcome.soldPrice.toFixed(2)} Cr.`
               );
             } else {
               this.pushCommentary(
                 room,
-                `[SKIPPED BY MANAGER] No AI franchise placed a bid. ${lot.player.name} passed UNSOLD at base price ₹${lot.player.basePrice.toFixed(2)} Cr.`
+                `⚡ [SKIPPED] All managers skipped. No AI franchise placed a bid. ${lot.player.name} passed UNSOLD at base price ₹${lot.player.basePrice.toFixed(2)} Cr.`
               );
             }
-
-            this.commitCurrentLot(room);
           }
+
+          // IMMEDIATELY commit the lot — no more waiting, no extra real-time bidding!
+          this.commitCurrentLot(room);
         } else {
-          this.pushCommentary(room, `[SKIP] ${team?.name || 'Manager'} skipped ${lot.player.name}. Waiting for other managers or AI.`);
+          this.pushCommentary(
+            room,
+            `[SKIP] ${team?.name || 'Manager'} skipped ${lot.player.name} (${skippedCount}/${activeHumanCount} managers skipped).`
+          );
           room.isDirty = true;
           this.broadcastRoomState(room.roomCode);
         }

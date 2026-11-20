@@ -458,6 +458,17 @@ export default function AuctionArenaPage() {
   }, [teams]);
   const totalHumanCount = humanTeams.length;
   const skipVotes = roomState?.skipVotes || [];
+
+  const currentLotSkippedCount = useMemo(() => {
+    if (!currentLot) return 0;
+    return humanTeams.filter(t => {
+      const hasSkipped = t.skipLotIds && t.skipLotIds.includes(currentLot.player.id);
+      if (t.franchiseId === myTeamId) {
+        return hasSkipped || optimisticSkipped === currentLot.player.id;
+      }
+      return hasSkipped;
+    }).length;
+  }, [currentLot, humanTeams, myTeamId, optimisticSkipped]);
   const myTeamHasVoted = Boolean(myTeamId && skipVotes.includes(myTeamId));
 
   const handleVoteSkipToSeason = () => {
@@ -519,10 +530,6 @@ export default function AuctionArenaPage() {
               [{roomCode || 'ROOM'}]
             </span>
           </div>
-
-          <span className="hidden md:inline-block text-xs font-mono text-slate-400">
-            {currentLot ? `LOT #${currentLot.lotNumber} OF ${currentLot.totalLots}` : 'WAITING FOR NEXT LOT...'}
-          </span>
 
           <span className="hidden lg:inline-block text-[11px] font-mono px-2 py-0.5 rounded bg-subpill text-slate-300">
             PHASE: {roomState?.phase || 'MAIN'}
@@ -647,20 +654,6 @@ export default function AuctionArenaPage() {
               )}
             </div>
           )}
-
-          {/* Player Pool Master List Popup Trigger Button */}
-          <button
-            type="button"
-            onClick={() => setShowPlayerPoolModal(true)}
-            className="h-9 py-[7px] px-[15px] rounded-xl bg-[#1C202E] hover:bg-[#2C3246] border border-white/[0.1] text-xs font-mono font-bold text-slate-200 transition-all shadow-sm active:scale-95 flex items-center gap-1.5 whitespace-nowrap"
-            title="Open Master Player Pool List (Queued, Live, Sold, Unsold)"
-          >
-            <Users className="w-3.5 h-3.5 text-brand-gold" />
-            <span>Players List</span>
-            <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-brand-gold/15 text-brand-gold font-bold">
-              {allPlayers.length || '314'}
-            </span>
-          </button>
 
           {/* Quit Room Button */}
           <button
@@ -1071,10 +1064,18 @@ export default function AuctionArenaPage() {
                               ? 'bg-brand-rose/20 border-brand-rose text-brand-rose'
                               : 'bg-subpill hover:bg-subpillHover border-borderDark text-slate-300'
                           }`}
-                          title="Skip this lot. Conclude bidding immediately and move to next player."
+                          title="Skip this lot. Conclude bidding immediately when all managers agree."
                         >
                           <FastForward className="w-3.5 h-3.5" />
-                          <span>{isManuallySkipped ? 'Skipped (Click to Unskip)' : 'Skip Player'}</span>
+                          <span>
+                            {isManuallySkipped
+                              ? (totalHumanCount > 1
+                                  ? `Skipped (${currentLotSkippedCount}/${totalHumanCount})`
+                                  : 'Skipped (Click to Unskip)')
+                              : (totalHumanCount > 1
+                                  ? `Skip Player (${currentLotSkippedCount}/${totalHumanCount})`
+                                  : 'Skip Player')}
+                          </span>
                         </button>
                       </>
                     )}
@@ -1463,19 +1464,14 @@ export default function AuctionArenaPage() {
                             {p.isOverseas && <span className="text-[10px] shrink-0" title="Overseas">✈️</span>}
                             <span className="text-[10px] text-slate-500 font-mono shrink-0">#{idx + 1} • {p.role}</span>
                           </div>
-                          <div className="flex items-center gap-1 font-mono text-[11px] tabular-nums mt-0.5">
-                            <span className="px-1 py-0.2 rounded bg-amber-500/15 text-amber-300 font-bold border border-amber-500/30" title="Overall">
-                              OVR {p.stats?.ovr ?? 75}
-                            </span>
-                            <span className="px-1 py-0.2 rounded bg-sky-500/15 text-sky-300 font-bold border border-sky-500/30" title="Batting">
-                              BAT {p.stats?.bat ?? 70}
-                            </span>
-                            <span className="px-1 py-0.2 rounded bg-emerald-500/15 text-emerald-300 font-bold border border-emerald-500/30" title="Bowling">
-                              BOWL {p.stats?.bowl ?? 70}
-                            </span>
-                            <span className="px-1 py-0.2 rounded bg-purple-500/15 text-purple-300 font-bold border border-purple-500/30" title="Power">
-                              PWR {p.stats?.power ?? 70}
-                            </span>
+                          <div className="flex items-center gap-2 text-[10.5px] font-mono text-slate-400 mt-0.5 tabular-nums">
+                            <span className="text-amber-400 font-semibold">OVR {p.stats?.ovr ?? 75}</span>
+                            <span className="text-slate-600 text-[9px]">•</span>
+                            <span>BAT <strong className="text-slate-200 font-medium">{p.stats?.bat ?? 70}</strong></span>
+                            <span className="text-slate-600 text-[9px]">•</span>
+                            <span>BWL <strong className="text-slate-200 font-medium">{p.stats?.bowl ?? 70}</strong></span>
+                            <span className="text-slate-600 text-[9px]">•</span>
+                            <span>PWR <strong className="text-slate-200 font-medium">{p.stats?.power ?? 70}</strong></span>
                           </div>
                         </div>
                         <div className="text-right shrink-0">
@@ -1504,19 +1500,14 @@ export default function AuctionArenaPage() {
                           {p.isOverseas && <span className="text-[10px] shrink-0" title="Overseas">✈️</span>}
                           <span className="text-[10px] text-slate-500 font-mono shrink-0">#{idx + 1} • {p.role}</span>
                         </div>
-                        <div className="flex items-center gap-1 font-mono text-[11px] tabular-nums mt-0.5">
-                          <span className="px-1 py-0.2 rounded bg-amber-500/15 text-amber-300 font-bold border border-amber-500/30" title="Overall">
-                            OVR {p.stats?.ovr ?? 75}
-                          </span>
-                          <span className="px-1 py-0.2 rounded bg-sky-500/15 text-sky-300 font-bold border border-sky-500/30" title="Batting">
-                            BAT {p.stats?.bat ?? 70}
-                          </span>
-                          <span className="px-1 py-0.2 rounded bg-emerald-500/15 text-emerald-300 font-bold border border-emerald-500/30" title="Bowling">
-                            BOWL {p.stats?.bowl ?? 70}
-                          </span>
-                          <span className="px-1 py-0.2 rounded bg-purple-500/15 text-purple-300 font-bold border border-purple-500/30" title="Power">
-                            PWR {p.stats?.power ?? 70}
-                          </span>
+                        <div className="flex items-center gap-2 text-[10.5px] font-mono text-slate-400 mt-0.5 tabular-nums">
+                          <span className="text-amber-400 font-semibold">OVR {p.stats?.ovr ?? 75}</span>
+                          <span className="text-slate-600 text-[9px]">•</span>
+                          <span>BAT <strong className="text-slate-200 font-medium">{p.stats?.bat ?? 70}</strong></span>
+                          <span className="text-slate-600 text-[9px]">•</span>
+                          <span>BWL <strong className="text-slate-200 font-medium">{p.stats?.bowl ?? 70}</strong></span>
+                          <span className="text-slate-600 text-[9px]">•</span>
+                          <span>PWR <strong className="text-slate-200 font-medium">{p.stats?.power ?? 70}</strong></span>
                         </div>
                       </div>
                       <div className="text-right shrink-0">
