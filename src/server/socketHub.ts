@@ -137,7 +137,8 @@ export class SocketHub {
     determinismRatio: number = 0.45,
     humanTaxEnabled: boolean = true,
     hostUsername: string = 'admin',
-    aiAggression: number = 0.45
+    aiAggression: number = 0.45,
+    simAlpha: number = 0.80
   ): InternalRoomState {
     this.bidderAI.config.determinismRatio = aiAggression;
     this.bidderAI.config.humanTaxEnabled = humanTaxEnabled;
@@ -184,6 +185,7 @@ export class SocketHub {
       determinismRatio,
       aiAggression,
       humanTaxEnabled,
+      simAlpha: simAlpha ?? 0.80,
       acceleratedRoundMode: '1-ACC',
       isPaused: false,
       isDirty: true,

@@ -72,6 +72,7 @@ export default function EntryLobbyPage() {
   const [aiAggression, setAiAggression] = useState(0.45);
   const [matchDeterminism, setMatchDeterminism] = useState(0.45);
   const [minPlayerOvr, setMinPlayerOvr] = useState<number>(60);
+  const [simAlpha, setSimAlpha] = useState<number>(0.80);
   const [humanTax, setHumanTax] = useState(true);
   const [showConfigDrawer, setShowConfigDrawer] = useState(false);
   const [savedRooms, setSavedRooms] = useState<any[]>([]);
@@ -277,7 +278,8 @@ export default function EntryLobbyPage() {
           determinismRatio: matchDeterminism,
           aiAggression: aiAggression,
           humanTaxEnabled: humanTax,
-          minOvr: minPlayerOvr
+          minOvr: minPlayerOvr,
+          simAlpha: simAlpha
         })
       });
       const data = await res.json();
@@ -774,6 +776,32 @@ export default function EntryLobbyPage() {
                               <span>68 (Balanced Tier)</span>
                               <span>75 (Galácticos Only)</span>
                             </div>
+                          </div>
+
+                          {/* Slider 4: Match Sim Alpha (α) - Controls Batting SR & Bowling Econ */}
+                          <div className="pt-2 border-t border-white/[0.04]">
+                            <div className="flex justify-between text-[11px] text-slate-300 mb-1">
+                              <span>4. Match Sim Alpha (α):</span>
+                              <span className="text-brand-gold font-bold">{simAlpha.toFixed(2)}</span>
+                            </div>
+                            <input
+                              type="range"
+                              min="0.5"
+                              max="1.5"
+                              step="0.05"
+                              value={simAlpha}
+                              onChange={e => setSimAlpha(parseFloat(e.target.value))}
+                              className="w-full accent-brand-gold cursor-pointer"
+                            />
+                            <div className="flex justify-between text-[9px] text-slate-500 mt-0.5">
+                              <span>0.50 (Low Scoring)</span>
+                              <span>0.80 (Default T20)</span>
+                              <span>1.00 (Standard)</span>
+                              <span>1.50 (Runfest)</span>
+                            </div>
+                            <p className="text-[9px] text-slate-400 mt-1">
+                              Batting SR (SR × α) &amp; Bowling Econ (Econ × (2 - α)). At 1.0 = baseline, 0.8 = 0.8× SR &amp; 1.2× Econ.
+                            </p>
                           </div>
 
                           {/* Toggle: Competitive Counter-Bidding */}

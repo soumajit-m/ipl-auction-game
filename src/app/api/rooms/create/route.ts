@@ -9,7 +9,7 @@ export async function POST(req: Request) {
   try {
     const host = getHostFromRequest(req);
     const body = await req.json().catch(() => ({}));
-    const { determinismRatio = 0.45, aiAggression = 0.45, humanTaxEnabled = true, minOvr } = body;
+    const { determinismRatio = 0.45, aiAggression = 0.45, humanTaxEnabled = true, minOvr, simAlpha = 0.80 } = body;
 
     const hostId = host?.hostId || body.hostId || 'admin_host_1';
     const hostUsername = host?.username || body.hostUsername || 'admin';
@@ -41,7 +41,8 @@ export async function POST(req: Request) {
       determinismRatio,
       humanTaxEnabled,
       hostUsername,
-      aiAggression
+      aiAggression,
+      simAlpha
     );
 
     return NextResponse.json({

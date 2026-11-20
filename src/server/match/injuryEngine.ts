@@ -106,19 +106,20 @@ export function processMatchWorkload(
     }
 
     if (playingXIIds.has(player.id)) {
-      // Active match play (danger zone after 5-7 consecutive games)
-      const loadGain = player.role === 'PACE' ? 12.0 : 9.0;
+      // Active match play: workload builds up (+18 for pacers, +14 for others)
+      const loadGain = player.role === 'PACE' ? 18.0 : 14.0;
       player.workload = Math.min(100.0, player.workload + loadGain);
 
-      // Injury roll if workload > 72.0 AND franchise has < 3 injuries
-      if (player.workload > 72.0 && currentInjuredCount < 3) {
-        const baseRisk = (player.stats?.injuryRisk ?? 0.10) * 0.55;
-        const scaledRisk = baseRisk * ((player.workload - 72.0) / 28.0);
+      // Realistic Match Injury Roll (Franchise capped at max 3 concurrent injuries)
+      if (currentInjuredCount < 3) {
+        const baseRisk = (player.stats?.injuryRisk ?? 0.10) * 0.35; // ~2.5% to 4.5% base risk per match
+        const fatigueRisk = player.workload > 30.0 ? ((player.workload - 30.0) / 70.0) * 0.10 : 0.0;
+        const totalRisk = Math.min(0.25, baseRisk + fatigueRisk);
 
-        if (rng() < scaledRisk) {
+        if (rng() < totalRisk) {
           currentInjuredCount++;
           const roll = rng();
-          if (roll < 0.80) {
+          if (roll < 0.75) {
             // Level 1: 1 Match Pause
             player.injuryStatus = 1;
             player.workload = Math.max(0.0, player.workload - 30.0);
@@ -131,7 +132,7 @@ export function processMatchWorkload(
               message: `${player.name} experienced minor tightness/spasm and will rest for 1 match.`,
               replacementEligible: false
             });
-          } else if (roll < 0.96) {
+          } else if (roll < 0.95) {
             // Level 2: 3 Match Pause
             player.injuryStatus = 3;
             player.workload = Math.max(0.0, player.workload - 45.0);

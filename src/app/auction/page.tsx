@@ -30,28 +30,6 @@ import {
 } from 'lucide-react';
 import { getNextBidIncrement as getDynamicBidIncrement, getHumanMinPurseReserve } from '@/types/auction.types';
 
-function getPlayerTierBadge(ovr: number) {
-  if (ovr >= 85) {
-    return {
-      label: 'Elite / Match Winner',
-      shortLabel: 'Elite',
-      badgeClass: 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-    };
-  }
-  if (ovr >= 75) {
-    return {
-      label: 'Quality Starter',
-      shortLabel: 'Starter',
-      badgeClass: 'bg-sky-500/20 text-sky-300 border border-sky-500/30'
-    };
-  }
-  return {
-    label: 'Developing Depth',
-    shortLabel: 'Depth',
-    badgeClass: 'bg-slate-800 text-slate-400 border border-borderDark'
-  };
-}
-
 export default function AuctionArenaPage() {
   const router = useRouter();
   const {
@@ -897,14 +875,6 @@ export default function AuctionArenaPage() {
                     <span className="px-2.5 py-1 rounded bg-brand-gold text-slate-950 font-mono font-black text-xs tabular-nums">
                       OVR {currentLot.player.stats.ovr}
                     </span>
-                    {(() => {
-                      const tier = getPlayerTierBadge(currentLot.player.stats.ovr);
-                      return (
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${tier.badgeClass}`}>
-                          {tier.label}
-                        </span>
-                      );
-                    })()}
                     <span className="px-2 py-1 rounded bg-subpill border border-borderDark font-mono text-xs text-slate-200 tabular-nums">
                       BAT {currentLot.player.stats.bat}
                     </span>
@@ -1741,16 +1711,6 @@ export default function AuctionArenaPage() {
                             <span className={`inline-block px-2 py-0.5 rounded text-xs ${ovrColor}`}>
                               {ovr}
                             </span>
-                            <div className="text-[9px] mt-0.5">
-                              {(() => {
-                                const tier = getPlayerTierBadge(ovr);
-                                return (
-                                  <span className={`px-1 py-0.2 rounded text-[9px] font-semibold ${tier.badgeClass}`}>
-                                    {tier.shortLabel}
-                                  </span>
-                                );
-                              })()}
-                            </div>
                           </td>
 
                           {/* Attributes */}
