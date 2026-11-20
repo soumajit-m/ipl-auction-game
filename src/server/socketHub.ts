@@ -2891,7 +2891,7 @@ export class SocketHub {
               this.pushCommentary(room, `🚑 INJURY UPDATE: ${inj.playerName} (${teamA.name}) is ruled out for the tournament.`);
             }
           } else if (inj.level === 'LEVEL_2_STRAIN') {
-            this.pushCommentary(room, `🩹 INJURY: ${inj.playerName} (${teamA.name}) suffered a muscle strain and will miss 3 matches.`);
+            this.pushCommentary(room, `🩹 INJURY: ${inj.playerName} (${teamA.name}) suffered a muscle strain and will miss ${inj.matchesOut} matches.`);
           } else if (inj.level === 'LEVEL_1_NIGGLE') {
             this.pushCommentary(room, `⚠️ NIGGLE: ${inj.playerName} (${teamA.name}) experienced soreness and will rest 1 match.`);
           }
@@ -2913,7 +2913,7 @@ export class SocketHub {
               this.pushCommentary(room, `🚑 INJURY UPDATE: ${inj.playerName} (${teamB.name}) is ruled out for the tournament.`);
             }
           } else if (inj.level === 'LEVEL_2_STRAIN') {
-            this.pushCommentary(room, `🩹 INJURY: ${inj.playerName} (${teamB.name}) suffered a muscle strain and will miss 3 matches.`);
+            this.pushCommentary(room, `🩹 INJURY: ${inj.playerName} (${teamB.name}) suffered a muscle strain and will miss ${inj.matchesOut} matches.`);
           } else if (inj.level === 'LEVEL_1_NIGGLE') {
             this.pushCommentary(room, `⚠️ NIGGLE: ${inj.playerName} (${teamB.name}) experienced soreness and will rest 1 match.`);
           }

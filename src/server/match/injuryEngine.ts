@@ -64,15 +64,17 @@ export function clampPhaseOverRuns(rawRuns: number, overNumber: number): number 
 }
 
 /**
- * Tournament Workload & 3-Tier Injury System (Tuned for ~0.8 - 1.2 injuries per match):
- * - Playing match: +9.0 Workload (+12.0 for fast bowlers)
- * - Sitting on bench: -35.0 Workload (Restoration)
- * - Safe zone up to 72.0 Workload (enters danger zone after 5-7 consecutive games)
- * - Hard cap: Maximum 3 concurrent injuries per franchise (prevents bench wipeouts)
- * - Levels:
- *    1. Level 1 (80%): 1 Match Pause (Minor niggle, quick recovery)
- *    2. Level 2 (16%): 3 Match Pause (Strain, squad depth challenge)
- *    3. Level 3 (4%): Ruled Out (Rare season tear, unlocks replacement draft)
+ * Tournament Workload & Balanced Simple Injury System:
+ * - Simple & Fair Injury Occurrence:
+ *    • Bowler: Exactly 1 in 6 matches chance (1/6 ≈ 16.67%) per team that ONE bowler gets injured.
+ *    • Batter: Exactly 1 in 8 matches chance (1/8 = 12.50%) per team that ONE batter gets injured.
+ * - Severity:
+ *    • Level 1 (80%): 1 Match Pause (Minor niggle, quick recovery)
+ *    • Level 2 (15%): 2 Match Pause (Strain)
+ *    • Level 3 (5%): Ruled Out (Rare season injury, unlocks replacement signing)
+ * - Safe limits:
+ *    • Maximum 2 concurrent injuries per team to prevent bench wipeouts.
+ *    • Guaranteed minimum 5 fit bowlers remaining so match lineups never break.
  */
 export function processMatchWorkload(
   squad: IPLPlayer[],
@@ -83,86 +85,169 @@ export function processMatchWorkload(
   const injuredPlayers: InjuryReport[] = [];
   const recoveredPlayers: string[] = [];
 
-  // Count active injuries in this franchise
-  let currentInjuredCount = squad.filter(p => (p.injuryStatus ?? 0) !== 0).length;
-
+  // 1. Process recoveries and workload reduction for already-injured or benched players
   for (const player of squad) {
     player.workload = player.workload ?? 0.0;
     player.injuryStatus = player.injuryStatus ?? 0;
 
-    // Check existing injuries first
     if (player.injuryStatus > 0) {
       player.injuryStatus -= 1;
       if (player.injuryStatus === 0) {
         recoveredPlayers.push(player.id);
-        currentInjuredCount = Math.max(0, currentInjuredCount - 1);
       }
-      // Injured player rests and recovers workload
       player.workload = Math.max(0.0, player.workload - 30.0);
-      continue;
     } else if (player.injuryStatus === -1) {
-      // Ruled out for tournament
-      continue;
-    }
-
-    if (playingXIIds.has(player.id)) {
-      // Active match play: workload builds up (+18 for pacers, +14 for others)
-      const loadGain = player.role === 'PACE' ? 18.0 : 14.0;
-      player.workload = Math.min(100.0, player.workload + loadGain);
-
-      // Realistic Match Injury Roll (Franchise capped at max 3 concurrent injuries)
-      if (currentInjuredCount < 3) {
-        const baseRisk = (player.stats?.injuryRisk ?? 0.10) * 0.35; // ~2.5% to 4.5% base risk per match
-        const fatigueRisk = player.workload > 30.0 ? ((player.workload - 30.0) / 70.0) * 0.10 : 0.0;
-        const totalRisk = Math.min(0.25, baseRisk + fatigueRisk);
-
-        if (rng() < totalRisk) {
-          currentInjuredCount++;
-          const roll = rng();
-          if (roll < 0.75) {
-            // Level 1: 1 Match Pause
-            player.injuryStatus = 1;
-            player.workload = Math.max(0.0, player.workload - 30.0);
-            injuredPlayers.push({
-              playerId: player.id,
-              playerName: player.name,
-              franchiseId,
-              level: 'LEVEL_1_NIGGLE',
-              matchesOut: 1,
-              message: `${player.name} experienced minor tightness/spasm and will rest for 1 match.`,
-              replacementEligible: false
-            });
-          } else if (roll < 0.95) {
-            // Level 2: 3 Match Pause
-            player.injuryStatus = 3;
-            player.workload = Math.max(0.0, player.workload - 45.0);
-            injuredPlayers.push({
-              playerId: player.id,
-              playerName: player.name,
-              franchiseId,
-              level: 'LEVEL_2_STRAIN',
-              matchesOut: 3,
-              message: `${player.name} suffered a muscle strain and is sidelined for 3 matches.`,
-              replacementEligible: false
-            });
-          } else {
-            // Level 3: Ruled Out
-            player.injuryStatus = -1;
-            injuredPlayers.push({
-              playerId: player.id,
-              playerName: player.name,
-              franchiseId,
-              level: 'LEVEL_3_RULED_OUT',
-              matchesOut: 999,
-              message: `${player.name} suffered a tournament-ending injury and is ruled out. Replacement signing unlocked!`,
-              replacementEligible: true
-            });
-          }
-        }
-      }
+      // Ruled out
+      player.workload = 0.0;
+    } else if (!playingXIIds.has(player.id)) {
+      // Benched fit player
+      player.workload = Math.max(0.0, player.workload - 25.0);
     } else {
-      // Benched player recovers workload
-      player.workload = Math.max(0.0, player.workload - 35.0);
+      // Playing match
+      player.workload = Math.min(100.0, player.workload + 10.0);
+    }
+  }
+
+  // Count current active injuries
+  let currentInjuredCount = squad.filter(p => (p.injuryStatus ?? 0) !== 0).length;
+  // Maximum 2 concurrent injuries per franchise ensures teams never run out of players or balance
+  if (currentInjuredCount >= 2) {
+    return { injuredPlayers, recoveredPlayers };
+  }
+
+  // Helper to test if player is a bowler
+  const isBowler = (p: IPLPlayer) =>
+    p.role === 'PACE' || p.role === 'SPIN' || (p.role === 'AR' && (p.stats?.bowl ?? 0) >= 55);
+
+  // Helper to test if player is a batter
+  const isBatter = (p: IPLPlayer) =>
+    p.role === 'BAT' || p.role === 'WK' || (p.role === 'AR' && (p.stats?.bat ?? 0) >= 55);
+
+  // Remaining fit bowlers count in squad (guarantee at least 5 fit bowlers remain)
+  const fitBowlersCount = squad.filter(p => (p.injuryStatus ?? 0) === 0 && isBowler(p)).length;
+
+  const newlyInjuredIds = new Set<string>();
+
+  // 2. BOWLER INJURY ROLL: 1 in 6 chance per team per match (1/6)
+  if (currentInjuredCount < 2 && fitBowlersCount > 5) {
+    const bowlerRoll = rng();
+    if (bowlerRoll < (1.0 / 6.0)) {
+      // Pick one eligible bowler from Playing XI
+      const eligibleBowlers = squad.filter(p =>
+        playingXIIds.has(p.id) &&
+        (p.injuryStatus ?? 0) === 0 &&
+        isBowler(p)
+      );
+
+      if (eligibleBowlers.length > 0) {
+        const pickedIdx = Math.floor(rng() * eligibleBowlers.length);
+        const bowler = eligibleBowlers[pickedIdx];
+
+        const sevRoll = rng();
+        if (sevRoll < 0.80) {
+          // Level 1: 1 Match Out
+          bowler.injuryStatus = 1;
+          bowler.workload = Math.max(0.0, (bowler.workload ?? 0) - 25.0);
+          injuredPlayers.push({
+            playerId: bowler.id,
+            playerName: bowler.name,
+            franchiseId,
+            level: 'LEVEL_1_NIGGLE',
+            matchesOut: 1,
+            message: `${bowler.name} experienced tightness/spasm and will rest for 1 match.`,
+            replacementEligible: false
+          });
+        } else if (sevRoll < 0.95) {
+          // Level 2: 2 Matches Out
+          bowler.injuryStatus = 2;
+          bowler.workload = Math.max(0.0, (bowler.workload ?? 0) - 40.0);
+          injuredPlayers.push({
+            playerId: bowler.id,
+            playerName: bowler.name,
+            franchiseId,
+            level: 'LEVEL_2_STRAIN',
+            matchesOut: 2,
+            message: `${bowler.name} suffered a muscle strain and is sidelined for 2 matches.`,
+            replacementEligible: false
+          });
+        } else {
+          // Level 3: Ruled Out
+          bowler.injuryStatus = -1;
+          injuredPlayers.push({
+            playerId: bowler.id,
+            playerName: bowler.name,
+            franchiseId,
+            level: 'LEVEL_3_RULED_OUT',
+            matchesOut: 999,
+            message: `${bowler.name} suffered a tournament-ending injury and is ruled out. Replacement signing unlocked!`,
+            replacementEligible: true
+          });
+        }
+        newlyInjuredIds.add(bowler.id);
+        currentInjuredCount++;
+      }
+    }
+  }
+
+  // 3. BATTER INJURY ROLL: 1 in 8 chance per team per match (1/8)
+  if (currentInjuredCount < 2) {
+    const batterRoll = rng();
+    if (batterRoll < (1.0 / 8.0)) {
+      // Pick one eligible batter from Playing XI (excluding anyone already injured)
+      const eligibleBatters = squad.filter(p =>
+        playingXIIds.has(p.id) &&
+        (p.injuryStatus ?? 0) === 0 &&
+        !newlyInjuredIds.has(p.id) &&
+        isBatter(p)
+      );
+
+      if (eligibleBatters.length > 0) {
+        const pickedIdx = Math.floor(rng() * eligibleBatters.length);
+        const batter = eligibleBatters[pickedIdx];
+
+        const sevRoll = rng();
+        if (sevRoll < 0.80) {
+          // Level 1: 1 Match Out
+          batter.injuryStatus = 1;
+          batter.workload = Math.max(0.0, (batter.workload ?? 0) - 25.0);
+          injuredPlayers.push({
+            playerId: batter.id,
+            playerName: batter.name,
+            franchiseId,
+            level: 'LEVEL_1_NIGGLE',
+            matchesOut: 1,
+            message: `${batter.name} experienced hamstring soreness and will rest for 1 match.`,
+            replacementEligible: false
+          });
+        } else if (sevRoll < 0.95) {
+          // Level 2: 2 Matches Out
+          batter.injuryStatus = 2;
+          batter.workload = Math.max(0.0, (batter.workload ?? 0) - 40.0);
+          injuredPlayers.push({
+            playerId: batter.id,
+            playerName: batter.name,
+            franchiseId,
+            level: 'LEVEL_2_STRAIN',
+            matchesOut: 2,
+            message: `${batter.name} suffered a muscle strain and is sidelined for 2 matches.`,
+            replacementEligible: false
+          });
+        } else {
+          // Level 3: Ruled Out
+          batter.injuryStatus = -1;
+          injuredPlayers.push({
+            playerId: batter.id,
+            playerName: batter.name,
+            franchiseId,
+            level: 'LEVEL_3_RULED_OUT',
+            matchesOut: 999,
+            message: `${batter.name} suffered a tournament-ending injury and is ruled out. Replacement signing unlocked!`,
+            replacementEligible: true
+          });
+        }
+        newlyInjuredIds.add(batter.id);
+        currentInjuredCount++;
+      }
     }
   }
 
