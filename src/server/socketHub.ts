@@ -23,7 +23,7 @@ import {
 import { AuctionBidderAI, DEFAULT_IPL_FRANCHISES, getAcceleratedBasePrice } from './auction/bidderAI';
 import { TeamMaker, validate352Lineup } from './match/teamMaker';
 import { FullMatchSimulator, Team2026 } from './match/fullMatchSimulator';
-import { processMatchWorkload, signInjuryReplacement } from './match/injuryEngine';
+import { processMatchWorkload } from './match/injuryEngine';
 import { GameRoom } from '../lib/mongodb';
 import { env } from '../lib/env';
 import { verifyHostToken } from '../lib/auth';
@@ -783,83 +783,7 @@ export class SocketHub {
       const lot = room.currentLot;
       if (lot && lot.state === 'OPEN') {
         if (allHumansHaveSkipped) {
-          // All active managers have skipped this player!
-          // Instantly clear all pending AI bid timeouts and stop the lot clock timer.
-          this.clearAIBidTimeouts(room);
-          if (room.lotClockInterval) {
-            clearInterval(room.lotClockInterval);
-            room.lotClockInterval = null;
-          }
-
-          if (lot.currentBidder) {
-            // A bid has ALREADY been placed on this lot (by human or AI)!
-            // Check if any AI wants to outbid using Mode A Vickrey
-            const leadId = lot.currentBidder;
-            const leadPrice = lot.currentPrice;
-            const inc = getNextBidIncrement(leadPrice);
-            const nextMinBid = Math.round((leadPrice + inc) * 100) / 100;
-
-            const outcome = this.bidderAI.resolveModeAVickrey(
-              room.roomCode,
-              room.teams,
-              lot.player,
-              room.lotQueue,
-              room.completedLots.length + 1,
-              room.phase,
-              nextMinBid
-            );
-
-            lot.biddingMode = 'MODE_A';
-            if (outcome.winnerId && outcome.soldPrice >= nextMinBid) {
-              lot.modeAProvisionalWinner = outcome.winnerId;
-              lot.modeAProvisionalPrice = outcome.soldPrice;
-              const winnerName = room.teams[outcome.winnerId]?.name || outcome.winnerId;
-              this.pushCommentary(
-                room,
-                `⚡ [SKIPPED] All managers skipped. AI outbid: ${lot.player.name} won by ${winnerName} for ₹${outcome.soldPrice.toFixed(2)} Cr.`
-              );
-            } else {
-              lot.modeAProvisionalWinner = leadId;
-              lot.modeAProvisionalPrice = leadPrice;
-              const winnerName = room.teams[leadId]?.name || leadId;
-              this.pushCommentary(
-                room,
-                `⚡ [SKIPPED] All managers skipped. ${lot.player.name} sold to leading bidder ${winnerName} for ₹${leadPrice.toFixed(2)} Cr.`
-              );
-            }
-          } else {
-            // Nobody has bid yet on this lot when all humans skipped.
-            const outcome = this.bidderAI.resolveModeAVickrey(
-              room.roomCode,
-              room.teams,
-              lot.player,
-              room.lotQueue,
-              room.completedLots.length + 1,
-              room.phase,
-              lot.currentPrice
-            );
-
-            lot.biddingMode = 'MODE_A';
-            lot.modeAProvisionalWinner = outcome.winnerId;
-            lot.modeAProvisionalPrice = outcome.soldPrice;
-            lot.modeASecondHighestVal = outcome.secondValuation;
-
-            if (outcome.winnerId && outcome.soldPrice > 0) {
-              const winnerName = room.teams[outcome.winnerId]?.name || outcome.winnerId;
-              this.pushCommentary(
-                room,
-                `⚡ [SKIPPED] All managers skipped. ${lot.player.name} won by ${winnerName} for ₹${outcome.soldPrice.toFixed(2)} Cr.`
-              );
-            } else {
-              this.pushCommentary(
-                room,
-                `⚡ [SKIPPED] All managers skipped. No AI franchise placed a bid. ${lot.player.name} passed UNSOLD at base price ₹${lot.player.basePrice.toFixed(2)} Cr.`
-              );
-            }
-          }
-
-          // IMMEDIATELY commit the lot — no more waiting, no extra real-time bidding!
-          this.commitCurrentLot(room);
+          this.fastResolveAndCommitCurrentLot(room, '⚡ [SKIPPED] All managers skipped.');
         } else {
           this.pushCommentary(
             room,
@@ -1065,12 +989,10 @@ export class SocketHub {
           break;
 
         case 'SET_SIM_ALPHA':
-          if ((data as any)?.alpha !== undefined) {
-            const alphaVal = Math.max(0.5, Math.min(1.5, Number((data as any).alpha)));
+          if (data?.alpha !== undefined) {
+            const alphaVal = Math.max(0.5, Math.min(1.5, Number(data.alpha)));
             if (room.season) room.season.simAlpha = alphaVal;
             room.simAlpha = alphaVal;
-            room.isDirty = true;
-            this.broadcastRoomState(room.roomCode);
           }
           break;
       }
@@ -1751,6 +1673,89 @@ export class SocketHub {
     this.startAuctionPhaseImmediately(room);
   }
 
+  /**
+   * Resolves a single lot using Mode A second-price logic.
+   * If a leading bidder already exists, attempts AI counter-bid; otherwise resolves from base price.
+   */
+  public resolveLotModeA(
+    room: InternalRoomState,
+    player: IPLPlayer,
+    leadingBidderId: string | null = null,
+    leadingPrice: number = 0
+  ): { winnerId: string | null; soldPrice: number; wasOutbid: boolean } {
+    if (leadingBidderId) {
+      const inc = getNextBidIncrement(leadingPrice);
+      const nextMinBid = Math.round((leadingPrice + inc) * 100) / 100;
+      const outcome = this.bidderAI.resolveModeAVickrey(
+        room.roomCode,
+        room.teams,
+        player,
+        room.lotQueue,
+        room.completedLots.length + 1,
+        room.phase,
+        nextMinBid
+      );
+
+      if (outcome.winnerId && outcome.soldPrice >= nextMinBid) {
+        return { winnerId: outcome.winnerId, soldPrice: outcome.soldPrice, wasOutbid: true };
+      }
+      return { winnerId: leadingBidderId, soldPrice: leadingPrice, wasOutbid: false };
+    }
+
+    const outcome = this.bidderAI.resolveModeAVickrey(
+      room.roomCode,
+      room.teams,
+      player,
+      room.lotQueue,
+      room.completedLots.length + 1,
+      room.phase,
+      leadingPrice || player.basePrice
+    );
+
+    if (outcome.winnerId && outcome.soldPrice > 0) {
+      return { winnerId: outcome.winnerId, soldPrice: outcome.soldPrice, wasOutbid: false };
+    }
+    return { winnerId: null, soldPrice: 0, wasOutbid: false };
+  }
+
+  /**
+   * Fast-resolves and commits the current active lot via Mode A (used by manual skip and filter skip).
+   */
+  public fastResolveAndCommitCurrentLot(room: InternalRoomState, reasonTag: string): void {
+    const lot = room.currentLot;
+    if (!lot) return;
+
+    this.clearAIBidTimeouts(room);
+    if (room.lotClockInterval) {
+      clearInterval(room.lotClockInterval);
+      room.lotClockInterval = null;
+    }
+
+    const { winnerId, soldPrice, wasOutbid } = this.resolveLotModeA(
+      room,
+      lot.player,
+      lot.currentBidder,
+      lot.currentPrice
+    );
+
+    lot.biddingMode = 'MODE_A';
+    lot.modeAProvisionalWinner = winnerId;
+    lot.modeAProvisionalPrice = soldPrice;
+
+    if (winnerId && soldPrice > 0) {
+      const winnerName = room.teams[winnerId]?.name || winnerId;
+      if (wasOutbid) {
+        this.pushCommentary(room, `${reasonTag} AI outbid: ${lot.player.name} won by ${winnerName} for ₹${soldPrice.toFixed(2)} Cr.`);
+      } else {
+        this.pushCommentary(room, `${reasonTag} ${lot.player.name} won by ${winnerName} for ₹${soldPrice.toFixed(2)} Cr.`);
+      }
+    } else {
+      this.pushCommentary(room, `${reasonTag} No AI franchise placed a bid. ${lot.player.name} passed UNSOLD at base price ₹${lot.player.basePrice.toFixed(2)} Cr.`);
+    }
+
+    this.commitCurrentLot(room);
+  }
+
   public checkAndTriggerModeAIfAllHumansSkipped(room: InternalRoomState): boolean {
     const lot = room.currentLot;
     if (!lot || lot.state !== 'OPEN') return false;
@@ -1831,41 +1836,7 @@ export class SocketHub {
     }
 
     if (allHumansSkipped) {
-      this.clearAIBidTimeouts(room);
-      if (room.lotClockInterval) {
-        clearInterval(room.lotClockInterval);
-        room.lotClockInterval = null;
-      }
-      // Fast-resolve lot via AI Mode A Vickrey so AI franchises bid and buy players they want
-      const outcome = this.bidderAI.resolveModeAVickrey(
-        room.roomCode,
-        room.teams,
-        lot.player,
-        room.lotQueue,
-        room.completedLots.length + 1,
-        room.phase,
-        lot.currentPrice
-      );
-
-      lot.biddingMode = 'MODE_A';
-      lot.modeAProvisionalWinner = outcome.winnerId;
-      lot.modeAProvisionalPrice = outcome.soldPrice;
-      lot.modeASecondHighestVal = outcome.secondValuation;
-
-      if (outcome.winnerId && outcome.soldPrice > 0) {
-        const winnerName = room.teams[outcome.winnerId]?.name || outcome.winnerId;
-        this.pushCommentary(
-          room,
-          `[SKIPPED BY MANAGER] AI bidding resolved: ${lot.player.name} signed by ${winnerName} for ₹${outcome.soldPrice.toFixed(2)} Cr.`
-        );
-      } else {
-        this.pushCommentary(
-          room,
-          `[SKIPPED BY MANAGER] No AI franchise placed a bid. ${lot.player.name} passed UNSOLD at base price ₹${lot.player.basePrice.toFixed(2)} Cr.`
-        );
-      }
-
-      this.commitCurrentLot(room);
+      this.fastResolveAndCommitCurrentLot(room, '[SKIPPED BY FILTER]');
       return true;
     }
     return false;
@@ -2245,48 +2216,15 @@ export class SocketHub {
     if (room.currentLot) {
       const curPlayer = room.currentLot.player;
       if (Number(curPlayer.marqueeSet || 1) === currentSet) {
-        if (room.currentLot.currentBidder) {
-          const leadId = room.currentLot.currentBidder;
-          const leadPrice = room.currentLot.currentPrice;
-          const inc = getNextBidIncrement(leadPrice);
-          const nextMinBid = Math.round((leadPrice + inc) * 100) / 100;
-          const outcome = this.bidderAI.resolveModeAVickrey(
-            room.roomCode,
-            room.teams,
-            curPlayer,
-            room.lotQueue,
-            room.completedLots.length + 1,
-            room.phase,
-            nextMinBid
-          );
-          if (outcome.winnerId && outcome.soldPrice >= nextMinBid) {
-            this.bidderAI.commitLotSale(room.teams, curPlayer, outcome.winnerId, outcome.soldPrice);
-            room.completedLots.push({ player: curPlayer, soldPrice: outcome.soldPrice, soldTo: outcome.winnerId });
-            signedCount++;
-          } else {
-            this.bidderAI.commitLotSale(room.teams, curPlayer, leadId, leadPrice);
-            room.completedLots.push({ player: curPlayer, soldPrice: leadPrice, soldTo: leadId });
-            signedCount++;
-          }
-        } else {
-          const outcome = this.bidderAI.resolveModeAVickrey(
-            room.roomCode,
-            room.teams,
-            curPlayer,
-            room.lotQueue,
-            room.completedLots.length + 1,
-            room.phase
-          );
-          if (outcome.winnerId && outcome.soldPrice > 0) {
-            this.bidderAI.commitLotSale(room.teams, curPlayer, outcome.winnerId, outcome.soldPrice);
-            room.completedLots.push({ player: curPlayer, soldPrice: outcome.soldPrice, soldTo: outcome.winnerId });
-            signedCount++;
-          } else {
-            this.bidderAI.commitLotSale(room.teams, curPlayer, null, 0);
-            room.completedLots.push({ player: curPlayer, soldPrice: null, soldTo: null });
-            unsoldCount++;
-          }
-        }
+        const { winnerId, soldPrice } = this.resolveLotModeA(
+          room,
+          curPlayer,
+          room.currentLot.currentBidder,
+          room.currentLot.currentPrice
+        );
+        this.bidderAI.commitLotSale(room.teams, curPlayer, winnerId, soldPrice);
+        room.completedLots.push({ player: curPlayer, soldPrice: winnerId ? soldPrice : null, soldTo: winnerId });
+        if (winnerId) signedCount++; else unsoldCount++;
       } else {
         // Put back at head of queue if not matching set
         room.lotQueue.unshift(curPlayer);
@@ -2298,23 +2236,10 @@ export class SocketHub {
     const remainingInQueue: IPLPlayer[] = [];
     for (const p of room.lotQueue) {
       if (Number(p.marqueeSet || 1) === currentSet) {
-        const outcome = this.bidderAI.resolveModeAVickrey(
-          room.roomCode,
-          room.teams,
-          p,
-          room.lotQueue,
-          room.completedLots.length + 1,
-          room.phase
-        );
-        if (outcome.winnerId && outcome.soldPrice > 0) {
-          this.bidderAI.commitLotSale(room.teams, p, outcome.winnerId, outcome.soldPrice);
-          room.completedLots.push({ player: p, soldPrice: outcome.soldPrice, soldTo: outcome.winnerId });
-          signedCount++;
-        } else {
-          this.bidderAI.commitLotSale(room.teams, p, null, 0);
-          room.completedLots.push({ player: p, soldPrice: null, soldTo: null });
-          unsoldCount++;
-        }
+        const { winnerId, soldPrice } = this.resolveLotModeA(room, p);
+        this.bidderAI.commitLotSale(room.teams, p, winnerId, soldPrice);
+        room.completedLots.push({ player: p, soldPrice: winnerId ? soldPrice : null, soldTo: winnerId });
+        if (winnerId) signedCount++; else unsoldCount++;
       } else {
         remainingInQueue.push(p);
       }

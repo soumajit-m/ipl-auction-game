@@ -196,6 +196,16 @@ export function validate352Lineup(
 
 export class TeamMaker {
   /**
+   * Clone squad to guarantee immutability against frozen Zustand state in React
+   */
+  public static cloneSquadWithDefaults(inputSquad: IPLPlayer[]): IPLPlayer[] {
+    return (inputSquad || []).map(p => ({
+      ...p,
+      stats: { ...(p.stats || { bat: 60, bowl: 60, ovr: 60, power: 60, fielding: 60 }) }
+    }));
+  }
+
+  /**
    * Helper to check bowling capability safely
    */
   public static isBowler(p: IPLPlayer): boolean {
@@ -209,6 +219,13 @@ export class TeamMaker {
       p.role === 'AR' ||
       (p.stats && p.stats.bowl >= 55)
     );
+  }
+
+  /**
+   * Dedicated eligible bowler check (guaranteed non-WK and bowling capable)
+   */
+  public static isEligibleBowler(p: IPLPlayer): boolean {
+    return TeamMaker.isBowler(p) && p.role !== 'WK' && !p.subType?.startsWith('WK');
   }
 
   /**
@@ -259,11 +276,7 @@ export class TeamMaker {
    * - Valid 3-5-2 Phase Bowler allocation obeying 4-2-2 Anti-Starvation quotas
    */
   public static buildLineup(teamId: string, inputSquad: IPLPlayer[], isSmart: boolean): Playing11Lineup {
-    // Clone squad to guarantee immutability against frozen Zustand state in React
-    const squad: IPLPlayer[] = (inputSquad || []).map(p => ({
-      ...p,
-      stats: { ...(p.stats || { bat: 60, bowl: 60, ovr: 60, power: 60, fielding: 60 }) }
-    }));
+    const squad: IPLPlayer[] = TeamMaker.cloneSquadWithDefaults(inputSquad);
 
     // Invariant 0: Ensure at least 11 players and at least 7 domestic players exist in squad
     const domCount = squad.filter(p => !p.isOverseas).length;
@@ -549,8 +562,8 @@ export class TeamMaker {
     }
 
     // 6. PHASE E: 3-5-2 Bowler Pool Allocation
-    const activeBowlers = selected.filter(p => TeamMaker.isBowler(p) && p.role !== 'WK' && !p.subType?.startsWith('WK'));
-    const nonWkSquadBowlers = squad.filter(p => TeamMaker.isBowler(p) && p.role !== 'WK' && !p.subType?.startsWith('WK') && !activeBowlers.some(a => a.id === p.id));
+    const activeBowlers = selected.filter(p => TeamMaker.isEligibleBowler(p));
+    const nonWkSquadBowlers = squad.filter(p => TeamMaker.isEligibleBowler(p) && !activeBowlers.some(a => a.id === p.id));
     const poolSource = activeBowlers.length >= 6 ? activeBowlers : [...activeBowlers, ...nonWkSquadBowlers];
     const frontlineBowlers = poolSource.filter(p => TeamMaker.isFrontlineBowler(p));
 
@@ -689,11 +702,7 @@ export class TeamMaker {
   ): Playing11Lineup {
     const teamId = teamIdParam || (inputSquad[0] as any)?.franchiseId || (inputSquad[0] as any)?.teamId || 'AI_TEAM';
 
-    // Clone squad to guarantee immutability
-    const squad: IPLPlayer[] = (inputSquad || []).map(p => ({
-      ...p,
-      stats: { ...(p.stats || { bat: 60, bowl: 60, ovr: 60, power: 60, fielding: 60 }) }
-    }));
+    const squad: IPLPlayer[] = TeamMaker.cloneSquadWithDefaults(inputSquad);
 
     TeamMaker.ensureSquadBowlingCapacity(squad);
 
@@ -795,8 +804,8 @@ export class TeamMaker {
     }
 
     const selected = Array.from(selectedMap.values());
-    const activeBowlers = selected.filter(p => TeamMaker.isBowler(p) && p.role !== 'WK' && !p.subType?.startsWith('WK'));
-    const nonWkSquadBowlers = squad.filter(p => TeamMaker.isBowler(p) && p.role !== 'WK' && !p.subType?.startsWith('WK') && !activeBowlers.some(a => a.id === p.id));
+    const activeBowlers = selected.filter(p => TeamMaker.isEligibleBowler(p));
+    const nonWkSquadBowlers = squad.filter(p => TeamMaker.isEligibleBowler(p) && !activeBowlers.some(a => a.id === p.id));
     const poolSource = activeBowlers.length >= 6 ? activeBowlers : [...activeBowlers, ...nonWkSquadBowlers];
     const frontlineBowlers = poolSource.filter(p => TeamMaker.isFrontlineBowler(p));
 
@@ -946,10 +955,7 @@ export class TeamMaker {
   ): Playing11Lineup {
     const teamId = teamIdParam || (inputSquad[0] as any)?.franchiseId || (inputSquad[0] as any)?.teamId || 'HUMAN_TEAM';
 
-    const squad: IPLPlayer[] = (inputSquad || []).map(p => ({
-      ...p,
-      stats: { ...(p.stats || { bat: 60, bowl: 60, ovr: 60, power: 60, fielding: 60 }) }
-    }));
+    const squad: IPLPlayer[] = TeamMaker.cloneSquadWithDefaults(inputSquad);
 
     TeamMaker.ensureSquadBowlingCapacity(squad);
 
@@ -987,8 +993,8 @@ export class TeamMaker {
     }
 
     const selected = Array.from(selectedMap.values());
-    const activeBowlers = selected.filter(p => TeamMaker.isBowler(p) && p.role !== 'WK' && !p.subType?.startsWith('WK'));
-    const nonWkSquadBowlers = sortedSquad.filter(p => TeamMaker.isBowler(p) && p.role !== 'WK' && !p.subType?.startsWith('WK') && !activeBowlers.some(a => a.id === p.id));
+    const activeBowlers = selected.filter(p => TeamMaker.isEligibleBowler(p));
+    const nonWkSquadBowlers = sortedSquad.filter(p => TeamMaker.isEligibleBowler(p) && !activeBowlers.some(a => a.id === p.id));
     const poolSource = activeBowlers.length >= 6 
       ? activeBowlers 
       : [...activeBowlers, ...nonWkSquadBowlers];

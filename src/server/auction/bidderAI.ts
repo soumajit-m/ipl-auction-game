@@ -152,31 +152,6 @@ export function clip(val: number, min: number, max: number): number {
 // 2. DYNAMIC ARCHETYPE DISTRIBUTION & ASSIGNMENT HELPERS
 // =============================================================================
 
-export function getArchetypeDistribution(aiCount: number): {
-  sdCount: number;
-  mbCount: number;
-  dpCount: number;
-} {
-  if (aiCount < 3) {
-    return { sdCount: 0, mbCount: 0, dpCount: aiCount };
-  }
-  if (aiCount === 3) {
-    return { sdCount: 1, mbCount: 1, dpCount: 1 };
-  }
-  if (aiCount <= 5) {
-    const sdCount = Math.min(2, Math.max(1, Math.floor(aiCount * 0.35)));
-    const mbCount = 1;
-    const dpCount = aiCount - sdCount - mbCount;
-    return { sdCount, mbCount, dpCount };
-  }
-  const maxSD = aiCount > 10 ? 3 : 2;
-  const sdCount = Math.min(maxSD, Math.max(2, Math.floor(aiCount * 0.3)));
-  const mbCount = aiCount >= 8 ? 2 : 1;
-  const dpCount = aiCount - sdCount - mbCount;
-
-  return { sdCount, mbCount, dpCount };
-}
-
 /**
  * Reordered AI nature pattern across franchises:
  * SD, MB, DP, DP, MB, SD, DP, DP, DP, DP ...
@@ -222,15 +197,6 @@ export function assignFranchiseArchetypes(aiFranchises: { id: string; archetype?
     else if (f.archetype === 'MONEYBALL_CORE') f.targetSquadSize = 20;
     else f.targetSquadSize = 19;
   });
-}
-
-// Backward-compatible role need factor calculation
-export function computeRoleNeedFactor(role: PrimaryRole, currentRoleCount: number, squadSize: number): number {
-  const targetQuota = TARGET_XI_QUOTAS[role] || 3;
-  if (currentRoleCount < targetQuota) {
-    return 1.0 + 0.12 * (targetQuota - currentRoleCount);
-  }
-  return 0.85;
 }
 
 // =============================================================================

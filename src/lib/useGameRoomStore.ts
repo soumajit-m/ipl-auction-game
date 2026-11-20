@@ -95,6 +95,11 @@ function formatAuctionError(msg: string): string {
   return msg;
 }
 
+function resolveActiveRoomCode(storeCode?: string | null, overrideCode?: string): string {
+  const code = overrideCode || storeCode || (typeof window !== 'undefined' ? (new URLSearchParams(window.location.search).get('room') || localStorage.getItem('active_ipl_room_code')) : null) || '';
+  return code.toUpperCase().trim();
+}
+
 export const useGameRoomStore = create<GameRoomStore>((set, get) => ({
   socket: null,
   connected: false,
@@ -257,7 +262,7 @@ export const useGameRoomStore = create<GameRoomStore>((set, get) => ({
   placeBid: (lotId: string, expectedPrice: number, bidAmount: number) => {
     const { socket, roomCode } = get();
     if (!socket) return;
-    const activeCode = (roomCode || (typeof window !== 'undefined' ? (new URLSearchParams(window.location.search).get('room') || localStorage.getItem('active_ipl_room_code')) : null) || '').toUpperCase().trim();
+    const activeCode = resolveActiveRoomCode(roomCode);
     socket.emit('place_bid', { lotId, expectedPrice, bidAmount, roomCode: activeCode });
   },
 
@@ -276,21 +281,21 @@ export const useGameRoomStore = create<GameRoomStore>((set, get) => ({
   toggleManualSkip: (teamId?: string, roomCode?: string) => {
     const { socket, mySeat, roomCode: storeRoomCode } = get();
     if (!socket) return;
-    const activeCode = (roomCode || storeRoomCode || (typeof window !== 'undefined' ? (new URLSearchParams(window.location.search).get('room') || localStorage.getItem('active_ipl_room_code')) : null) || '').toUpperCase().trim();
+    const activeCode = resolveActiveRoomCode(storeRoomCode, roomCode);
     const activeTeamId = teamId || mySeat?.teamId || (typeof window !== 'undefined' ? localStorage.getItem('ipl_claimed_team_id') : null);
     socket.emit('toggle_manual_skip', { teamId: activeTeamId, roomCode: activeCode });
   },
 
   hostAction: (action, targetTeamId) => {
     const { socket, roomCode, roomState } = get();
-    const activeCode = (roomCode || (typeof window !== 'undefined' ? (new URLSearchParams(window.location.search).get('room') || localStorage.getItem('active_ipl_room_code')) : null) || '').toUpperCase().trim();
+    const activeCode = resolveActiveRoomCode(roomCode);
     if (action === 'TOGGLE_SPEED' && roomState) {
-      const nextSpeed = (roomState as any).auctionSpeedMultiplier === 5 ? 1 : 5;
-      set({ roomState: { ...roomState, auctionSpeedMultiplier: nextSpeed } as any });
+      const nextSpeed = roomState.auctionSpeedMultiplier === 5 ? 1 : 5;
+      set({ roomState: { ...roomState, auctionSpeedMultiplier: nextSpeed } });
     }
     if (action === 'TOGGLE_PAUSE' && roomState) {
-      const nextPaused = !(roomState as any).isPaused;
-      set({ roomState: { ...roomState, isPaused: nextPaused } as any });
+      const nextPaused = !roomState.isPaused;
+      set({ roomState: { ...roomState, isPaused: nextPaused } });
     }
     if (!socket) return;
     socket.emit('host_action', { action, targetTeamId, roomCode: activeCode });
@@ -298,39 +303,38 @@ export const useGameRoomStore = create<GameRoomStore>((set, get) => ({
 
   setSimAlpha: (alpha: number) => {
     const { socket, roomCode, roomState } = get();
-    const activeCode = (roomCode || (typeof window !== 'undefined' ? (new URLSearchParams(window.location.search).get('room') || localStorage.getItem('active_ipl_room_code')) : null) || '').toUpperCase().trim();
-    if (roomState && (roomState as any).season) {
-      set({ roomState: { ...roomState, season: { ...(roomState as any).season, simAlpha: alpha } } as any });
+    const activeCode = resolveActiveRoomCode(roomCode);
+    if (roomState?.season) {
+      set({ roomState: { ...roomState, season: { ...roomState.season, simAlpha: alpha } } });
     }
     if (!socket) return;
     socket.emit('set_sim_alpha', { alpha, roomCode: activeCode });
-    socket.emit('host_action', { action: 'SET_SIM_ALPHA', alpha, roomCode: activeCode });
   },
 
   sendMatchReady: () => {
     const { socket, roomCode } = get();
-    const activeCode = (roomCode || (typeof window !== 'undefined' ? (new URLSearchParams(window.location.search).get('room') || localStorage.getItem('active_ipl_room_code')) : null) || '').toUpperCase().trim();
+    const activeCode = resolveActiveRoomCode(roomCode);
     if (!socket) return;
     socket.emit('match_ready', { roomCode: activeCode });
   },
 
   simulateMatch: () => {
     const { socket, roomCode, hostAuth } = get();
-    const activeCode = (roomCode || (typeof window !== 'undefined' ? (new URLSearchParams(window.location.search).get('room') || localStorage.getItem('active_ipl_room_code')) : null) || '').toUpperCase().trim();
+    const activeCode = resolveActiveRoomCode(roomCode);
     if (!socket) return;
     socket.emit('simulate_match', { roomCode: activeCode, hostId: hostAuth?.hostId });
   },
 
   voteSimulate: () => {
     const { socket, roomCode } = get();
-    const activeCode = (roomCode || (typeof window !== 'undefined' ? (new URLSearchParams(window.location.search).get('room') || localStorage.getItem('active_ipl_room_code')) : null) || '').toUpperCase().trim();
+    const activeCode = resolveActiveRoomCode(roomCode);
     if (!socket) return;
     socket.emit('vote_simulate', { roomCode: activeCode });
   },
 
   forceSimulateMatch: () => {
     const { socket, roomCode, hostAuth } = get();
-    const activeCode = (roomCode || (typeof window !== 'undefined' ? (new URLSearchParams(window.location.search).get('room') || localStorage.getItem('active_ipl_room_code')) : null) || '').toUpperCase().trim();
+    const activeCode = resolveActiveRoomCode(roomCode);
     if (!socket) return;
     socket.emit('force_simulate_match', { roomCode: activeCode, hostId: hostAuth?.hostId });
   },
@@ -358,7 +362,7 @@ export const useGameRoomStore = create<GameRoomStore>((set, get) => ({
 
   skipAuctionDebug: () => {
     const { socket, roomCode } = get();
-    const activeCode = (roomCode || (typeof window !== 'undefined' ? (new URLSearchParams(window.location.search).get('room') || localStorage.getItem('active_ipl_room_code')) : null) || '').toUpperCase().trim();
+    const activeCode = resolveActiveRoomCode(roomCode);
     if (!socket || !activeCode) return;
     socket.emit('debug:skip_auction', { roomCode: activeCode });
   },
@@ -366,25 +370,25 @@ export const useGameRoomStore = create<GameRoomStore>((set, get) => ({
   voteSkipAuction: (agreed: boolean = true) => {
     const { socket, roomCode } = get();
     if (!socket) return;
-    const activeCode = (roomCode || (typeof window !== 'undefined' ? (new URLSearchParams(window.location.search).get('room') || localStorage.getItem('active_ipl_room_code')) : null) || '').toUpperCase().trim();
+    const activeCode = resolveActiveRoomCode(roomCode);
     socket.emit('vote_skip_auction', { agreed, roomCode: activeCode });
   },
 
   voteSkipSet: (agreed?: boolean, teamId?: string, roomCode?: string) => {
     const { socket, mySeat, roomCode: storeRoomCode } = get();
     if (!socket) return;
-    const activeCode = (roomCode || storeRoomCode || (typeof window !== 'undefined' ? (new URLSearchParams(window.location.search).get('room') || localStorage.getItem('active_ipl_room_code')) : null) || '').toUpperCase().trim();
+    const activeCode = resolveActiveRoomCode(storeRoomCode, roomCode);
     const activeTeamId = teamId || mySeat?.teamId || (typeof window !== 'undefined' ? localStorage.getItem('ipl_claimed_team_id') : null);
     socket.emit('vote_skip_set', { agreed, teamId: activeTeamId, roomCode: activeCode });
   },
 
   updateLineup: (lineup: Playing11Lineup) => {
     const { socket, roomCode, roomState } = get();
-    const activeCode = roomCode || (typeof window !== 'undefined' ? (new URLSearchParams(window.location.search).get('room') || localStorage.getItem('active_ipl_room_code')) : null);
+    const activeCode = resolveActiveRoomCode(roomCode);
 
     // Optimistically update local roomState
-    if (roomState && (roomState as any).season) {
-      const curSeason = (roomState as any).season;
+    if (roomState?.season) {
+      const curSeason = roomState.season;
       const updatedSeason = {
         ...curSeason,
         lineups: {
@@ -392,7 +396,7 @@ export const useGameRoomStore = create<GameRoomStore>((set, get) => ({
           [lineup.teamId]: lineup
         }
       };
-      set({ roomState: { ...roomState, season: updatedSeason } as any });
+      set({ roomState: { ...roomState, season: updatedSeason } });
     }
 
     if (!socket) return;
