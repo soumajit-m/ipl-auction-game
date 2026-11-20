@@ -1,3 +1,13 @@
+---
+title: IPL Auction & Season Simulator
+emoji: 🏏
+colorFrom: yellow
+colorTo: red
+sdk: docker
+app_port: 7860
+pinned: false
+---
+
 # IPL Auction & Season Simulator (2026)
 
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/soumajit-m/ipl-auction-game)
