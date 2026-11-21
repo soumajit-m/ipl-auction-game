@@ -180,16 +180,25 @@ const PlayerPoolTableRow = React.memo(function PlayerPoolTableRow({
 });
 
 const RemainingPoolRow = React.memo(function RemainingPoolRow({
-  player: p
+  player: p,
+  isLive
 }: {
   player: any;
+  isLive?: boolean;
 }) {
   return (
-    <div className="py-1.5 px-1.5 flex items-center justify-between text-xs hover:bg-canvas/40 rounded gap-2" style={{ contain: 'layout paint' }}>
+    <div className={`py-1.5 px-1.5 flex items-center justify-between text-xs rounded gap-2 transition-colors ${
+      isLive ? 'bg-brand-gold/10 border border-brand-gold/40' : 'hover:bg-canvas/40'
+    }`} style={{ contain: 'layout paint' }}>
       <div className="min-w-0 flex-1">
         <div className="font-medium text-slate-200 flex items-center gap-1.5 truncate">
           <span className="truncate">{p.name}</span>
           {p.isOverseas && <span className="text-[10px] shrink-0" title="Overseas">✈️</span>}
+          {isLive && (
+            <span className="px-1.5 py-0.2 rounded text-[9px] font-mono bg-brand-gold text-slate-950 font-bold shrink-0 animate-pulse">
+              LIVE
+            </span>
+          )}
           <span className="text-[10px] text-slate-500 font-mono shrink-0">SET {p.marqueeSet || 1} • {p.role}</span>
         </div>
         <div className="flex items-center gap-2 text-[10.5px] font-mono text-slate-400 mt-0.5 tabular-nums">
@@ -289,6 +298,7 @@ export default function AuctionArenaPage() {
 
   const [inspectingTeamId, setInspectingTeamId] = useState<string>('CSK');
   const [inspectorTab, setInspectorTab] = useState<'BOUGHT' | 'REMAINING'>('BOUGHT');
+  const [poolViewMode, setPoolViewMode] = useState<'CURRENT_SET' | 'ALL'>('CURRENT_SET');
   const [saveSuccessMsg, setSaveSuccessMsg] = useState<string | null>(null);
   const [showSaveTick, setShowSaveTick] = useState(false);
   const [isBidLocked, setIsBidLocked] = useState(false);
@@ -651,12 +661,53 @@ export default function AuctionArenaPage() {
     return list;
   }, [allPlayers, playerStatusMap, poolStatusFilter, poolSetFilter, poolRoleFilter, poolOverseasOnly, poolSearch, poolSortBy, currentLot?.player?.marqueeSet]);
 
+  const currentActiveSet = currentLot?.player?.marqueeSet || 1;
+
+  // All players belonging to the current active set
+  const currentSetAllPlayers = useMemo(() => {
+    return allPlayers.filter(p => (p.marqueeSet || 1) === currentActiveSet);
+  }, [allPlayers, currentActiveSet]);
+
+  // Current set's lot progress: lot (x out of m)
+  const currentSetLotProgress = useMemo(() => {
+    const totalInSet = currentSetAllPlayers.length;
+    if (totalInSet === 0) {
+      return {
+        lotInSet: currentLot?.lotNumber || 1,
+        totalInSet: currentLot?.totalLots || 1
+      };
+    }
+    const completedInSet = currentSetAllPlayers.filter(p => {
+      const st = playerStatusMap.get(p.id)?.status;
+      return st === 'SOLD' || st === 'UNSOLD';
+    }).length;
+
+    const lotInSet = Math.min(totalInSet, completedInSet + 1);
+    return {
+      lotInSet,
+      totalInSet
+    };
+  }, [currentSetAllPlayers, playerStatusMap, currentLot?.lotNumber, currentLot?.totalLots]);
+
+  // Remaining queued/live players belonging strictly to the current active set
+  const currentSetPoolPlayers = useMemo(() => {
+    return allPlayers.filter(p => {
+      if ((p.marqueeSet || 1) !== currentActiveSet) return false;
+      const st = playerStatusMap.get(p.id)?.status || 'QUEUED';
+      return st === 'QUEUED' || st === 'LIVE';
+    });
+  }, [allPlayers, playerStatusMap, currentActiveSet]);
+
   const remainingPoolPlayers = useMemo(() => {
     return allPlayers.filter(p => {
       const st = playerStatusMap.get(p.id)?.status || 'QUEUED';
       return st === 'QUEUED';
     });
   }, [allPlayers, playerStatusMap]);
+
+  const displayedRemainingPlayers = useMemo(() => {
+    return poolViewMode === 'CURRENT_SET' ? currentSetPoolPlayers : remainingPoolPlayers;
+  }, [poolViewMode, currentSetPoolPlayers, remainingPoolPlayers]);
 
   const handlePlaceBid = () => {
     if (!currentLot || !myTeam || isBidLocked || currentLot.currentBidder === myTeamId || roomState?.isPaused || roomState?.isAuctionPaused) return;
@@ -1078,8 +1129,11 @@ export default function AuctionArenaPage() {
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-canvas border border-borderDark text-brand-gold">
-                        SET {currentLot.player.marqueeSet}
+                      <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-canvas border border-borderDark text-brand-gold font-bold">
+                        SET {currentActiveSet} • LOT ({currentSetLotProgress.lotInSet} of {currentSetLotProgress.totalInSet})
+                      </span>
+                      <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-canvas border border-borderDark text-slate-400">
+                        OVERALL #{currentLot.lotNumber} of {currentLot.totalLots}
                       </span>
                       {currentLot.player.isOverseas && (
                         <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-brand-cyan/20 text-brand-cyan border border-brand-cyan/30 flex items-center gap-1">
@@ -1673,7 +1727,7 @@ export default function AuctionArenaPage() {
                       : 'text-slate-400 hover:text-slate-200'
                   }`}
                 >
-                  Remaining Pool ({remainingPoolPlayers.length})
+                  Set {currentActiveSet} Pool ({currentSetPoolPlayers.length})
                 </button>
               </div>
             </div>
@@ -1698,18 +1752,52 @@ export default function AuctionArenaPage() {
                   })
                 )
               ) : (
-                remainingPoolPlayers.length === 0 ? (
-                  <div className="p-8 text-center text-xs font-mono text-slate-600">
-                    Remaining pool is empty.<br />All auction lots completed.
+                <>
+                  <div className="flex items-center justify-between px-1.5 py-1 mb-1 bg-canvas/60 rounded border border-borderDark/40 text-[10px] font-mono text-slate-400 shrink-0">
+                    <span className="font-semibold text-slate-300">
+                      {poolViewMode === 'CURRENT_SET'
+                        ? `SET ${currentActiveSet} REMAINING (${currentSetPoolPlayers.length})`
+                        : `ALL REMAINING POOL (${remainingPoolPlayers.length})`}
+                    </span>
+                    <div className="flex items-center gap-1 bg-canvas p-0.5 rounded border border-borderDark/60">
+                      <button
+                        type="button"
+                        onClick={() => setPoolViewMode('CURRENT_SET')}
+                        className={`px-1.5 py-0.5 rounded text-[9.5px] transition-colors ${
+                          poolViewMode === 'CURRENT_SET' ? 'bg-tile text-brand-gold font-bold shadow-xs' : 'text-slate-400 hover:text-slate-200'
+                        }`}
+                      >
+                        Set {currentActiveSet}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPoolViewMode('ALL')}
+                        className={`px-1.5 py-0.5 rounded text-[9.5px] transition-colors ${
+                          poolViewMode === 'ALL' ? 'bg-tile text-brand-gold font-bold shadow-xs' : 'text-slate-400 hover:text-slate-200'
+                        }`}
+                      >
+                        All ({remainingPoolPlayers.length})
+                      </button>
+                    </div>
                   </div>
-                ) : (
-                  remainingPoolPlayers.map((p) => (
-                    <RemainingPoolRow
-                      key={p.id}
-                      player={p}
-                    />
-                  ))
-                )
+
+                  {displayedRemainingPlayers.length === 0 ? (
+                    <div className="p-8 text-center text-xs font-mono text-slate-600">
+                      {poolViewMode === 'CURRENT_SET'
+                        ? `Set ${currentActiveSet} pool is complete.`
+                        : 'Remaining pool is empty.'}<br />
+                      {poolViewMode === 'CURRENT_SET' ? 'All lots in this set resolved.' : 'All auction lots completed.'}
+                    </div>
+                  ) : (
+                    displayedRemainingPlayers.map((p) => (
+                      <RemainingPoolRow
+                        key={p.id}
+                        player={p}
+                        isLive={currentLot?.player?.id === p.id}
+                      />
+                    ))
+                  )}
+                </>
               )}
             </div>
           </div>
