@@ -1197,12 +1197,12 @@ export class AuctionBidderAI {
       const timeSeed = (Math.floor(elapsedTime * 1000) ^ hashString(`${franchiseId}:${player.id}:${elapsedTime}`)) >>> 0;
       const rand = mulberry32(timeSeed);
 
-      // Bimodal Direction Factor: (rand() > 50 ? -1 : 1.5) seeded by elapsed time
+      // Bimodal Direction Factor: (rand() > 50 ? -1 : 1) seeded by elapsed time
       const randBimodal = rand() * 100;
-      const randSign = randBimodal > 50 ? -1 : 1.5;
+      const randSign = randBimodal > 50 ? -1 : 1;
 
-      // Added value magnitude using elapsed-time seeded PRNG
-      const randMagnitude = rand();
+      // Added value magnitude using elapsed-time seeded PRNG (goes from -3 to 2)
+      const randMagnitude = rand() * (randSign < 0 ? 3 : 2);
       randomNoise = lambda * (randMagnitude * purseRatio) * randSign;
       this.lotNoiseMap.set(noiseKey, randomNoise);
     }
