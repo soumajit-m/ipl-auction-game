@@ -1,0 +1,428 @@
+[
+  {
+    "cricsheetName": "BR Sharath",
+    "seasonsActive": [
+      "2024"
+    ],
+    "playedAll3Years": false,
+    "statsSummary": {
+      "2024": {
+        "cricsheetName": "BR Sharath",
+        "matches": 1,
+        "batInnings": 1,
+        "runs": 2,
+        "ballsFaced": 5,
+        "dismissals": 1,
+        "notOuts": 0,
+        "fours": 0,
+        "sixes": 0,
+        "fifties": 0,
+        "hundreds": 0,
+        "batAvg": 2.0,
+        "strikeRate": 40.0,
+        "bowlInnings": 0,
+        "ballsBowled": 0,
+        "runsConceded": 0,
+        "wickets": 0,
+        "bowlEcon": 0.0,
+        "bowlStrikeRate": 0.0,
+        "bowlAvg": 0.0
+      }
+    }
+  },
+  {
+    "cricsheetName": "DA Payne",
+    "seasonsActive": [
+      "2026"
+    ],
+    "playedAll3Years": false,
+    "statsSummary": {
+      "2026": {
+        "cricsheetName": "DA Payne",
+        "matches": 2,
+        "batInnings": 1,
+        "runs": 6,
+        "ballsFaced": 5,
+        "dismissals": 0,
+        "notOuts": 1,
+        "fours": 0,
+        "sixes": 0,
+        "fifties": 0,
+        "hundreds": 0,
+        "batAvg": 6.0,
+        "strikeRate": 120.0,
+        "bowlInnings": 2,
+        "ballsBowled": 30,
+        "runsConceded": 70.0,
+        "wickets": 2,
+        "bowlEcon": 14.0,
+        "bowlStrikeRate": 15.0,
+        "bowlAvg": 35.0
+      }
+    }
+  },
+  {
+    "cricsheetName": "GF Linde",
+    "seasonsActive": [
+      "2026"
+    ],
+    "playedAll3Years": false,
+    "statsSummary": {
+      "2026": {
+        "cricsheetName": "GF Linde",
+        "matches": 3,
+        "batInnings": 3,
+        "runs": 31,
+        "ballsFaced": 21,
+        "dismissals": 3,
+        "notOuts": 0,
+        "fours": 6,
+        "sixes": 0,
+        "fifties": 0,
+        "hundreds": 0,
+        "batAvg": 10.33,
+        "strikeRate": 147.62,
+        "bowlInnings": 3,
+        "ballsBowled": 37,
+        "runsConceded": 55,
+        "wickets": 1,
+        "bowlEcon": 8.92,
+        "bowlStrikeRate": 37.0,
+        "bowlAvg": 55.0
+      }
+    }
+  },
+  {
+    "cricsheetName": "Harpreet Singh",
+    "seasonsActive": [
+      "2024"
+    ],
+    "playedAll3Years": false,
+    "statsSummary": {
+      "2024": {
+        "cricsheetName": "Harpreet Singh",
+        "matches": 2,
+        "batInnings": 2,
+        "runs": 27,
+        "ballsFaced": 34,
+        "dismissals": 2,
+        "notOuts": 0,
+        "fours": 2,
+        "sixes": 0,
+        "fifties": 0,
+        "hundreds": 0,
+        "batAvg": 13.5,
+        "strikeRate": 79.41,
+        "bowlInnings": 0,
+        "ballsBowled": 0,
+        "runsConceded": 0,
+        "wickets": 0,
+        "bowlEcon": 0.0,
+        "bowlStrikeRate": 0.0,
+        "bowlAvg": 0.0
+      }
+    }
+  },
+  {
+    "cricsheetName": "KD Karthik",
+    "seasonsActive": [
+      "2024"
+    ],
+    "playedAll3Years": false,
+    "statsSummary": {
+      "2024": {
+        "cricsheetName": "KD Karthik",
+        "matches": 13,
+        "batInnings": 13,
+        "runs": 326,
+        "ballsFaced": 174,
+        "dismissals": 9,
+        "notOuts": 4,
+        "fours": 27,
+        "sixes": 22,
+        "fifties": 2,
+        "hundreds": 0,
+        "batAvg": 36.22,
+        "strikeRate": 187.36,
+        "bowlInnings": 0,
+        "ballsBowled": 0,
+        "runsConceded": 0,
+        "wickets": 0,
+        "bowlEcon": 0.0,
+        "bowlStrikeRate": 0.0,
+        "bowlAvg": 0.0
+      }
+    }
+  },
+  {
+    "cricsheetName": "MS Wade",
+    "seasonsActive": [
+      "2024"
+    ],
+    "playedAll3Years": false,
+    "statsSummary": {
+      "2024": {
+        "cricsheetName": "MS Wade",
+        "matches": 1,
+        "batInnings": 1,
+        "runs": 4,
+        "ballsFaced": 6,
+        "dismissals": 1,
+        "notOuts": 0,
+        "fours": 0,
+        "sixes": 0,
+        "fifties": 0,
+        "hundreds": 0,
+        "batAvg": 4.0,
+        "strikeRate": 66.67,
+        "bowlInnings": 0,
+        "ballsBowled": 0,
+        "runsConceded": 0,
+        "wickets": 0,
+        "bowlEcon": 0.0,
+        "bowlStrikeRate": 0.0,
+        "bowlAvg": 0.0
+      }
+    }
+  },
+  {
+    "cricsheetName": "R Smaran",
+    "seasonsActive": [
+      "2026"
+    ],
+    "playedAll3Years": false,
+    "statsSummary": {
+      "2026": {
+        "cricsheetName": "R Smaran",
+        "matches": 4,
+        "batInnings": 4,
+        "runs": 19,
+        "ballsFaced": 25,
+        "dismissals": 3,
+        "notOuts": 1,
+        "fours": 3,
+        "sixes": 0,
+        "fifties": 0,
+        "hundreds": 0,
+        "batAvg": 6.33,
+        "strikeRate": 76.0,
+        "bowlInnings": 0,
+        "ballsBowled": 0,
+        "runsConceded": 0,
+        "wickets": 0,
+        "bowlEcon": 0.0,
+        "bowlStrikeRate": 0.0,
+        "bowlAvg": 0.0
+      }
+    }
+  },
+  {
+    "cricsheetName": "RR Rossouw",
+    "seasonsActive": [
+      "2024"
+    ],
+    "playedAll3Years": false,
+    "statsSummary": {
+      "2024": {
+        "cricsheetName": "RR Rossouw",
+        "matches": 8,
+        "batInnings": 8,
+        "runs": 211,
+        "ballsFaced": 116,
+        "dismissals": 8,
+        "notOuts": 0,
+        "fours": 25,
+        "sixes": 11,
+        "fifties": 1,
+        "hundreds": 0,
+        "batAvg": 26.38,
+        "strikeRate": 181.9,
+        "bowlInnings": 0,
+        "ballsBowled": 0,
+        "runsConceded": 0,
+        "wickets": 0,
+        "bowlEcon": 0.0,
+        "bowlStrikeRate": 0.0,
+        "bowlAvg": 0.0
+      }
+    }
+  },
+  {
+    "cricsheetName": "Sumit Kumar",
+    "seasonsActive": [
+      "2024"
+    ],
+    "playedAll3Years": false,
+    "statsSummary": {
+      "2024": {
+        "cricsheetName": "Sumit Kumar",
+        "matches": 3,
+        "batInnings": 3,
+        "runs": 18,
+        "ballsFaced": 24,
+        "dismissals": 2,
+        "notOuts": 1,
+        "fours": 2,
+        "sixes": 1,
+        "fifties": 0,
+        "hundreds": 0,
+        "batAvg": 9.0,
+        "strikeRate": 75.0,
+        "bowlInnings": 2,
+        "ballsBowled": 20,
+        "runsConceded": 38.0,
+        "wickets": 0,
+        "bowlEcon": 11.4,
+        "bowlStrikeRate": 0.0,
+        "bowlAvg": 0.0
+      }
+    }
+  },
+  {
+    "cricsheetName": "T Kohler-Cadmore",
+    "seasonsActive": [
+      "2024"
+    ],
+    "playedAll3Years": false,
+    "statsSummary": {
+      "2024": {
+        "cricsheetName": "T Kohler-Cadmore",
+        "matches": 3,
+        "batInnings": 3,
+        "runs": 48,
+        "ballsFaced": 54,
+        "dismissals": 3,
+        "notOuts": 0,
+        "fours": 7,
+        "sixes": 1,
+        "fifties": 0,
+        "hundreds": 0,
+        "batAvg": 16.0,
+        "strikeRate": 88.89,
+        "bowlInnings": 0,
+        "ballsBowled": 0,
+        "runsConceded": 0,
+        "wickets": 0,
+        "bowlEcon": 0.0,
+        "bowlStrikeRate": 0.0,
+        "bowlAvg": 0.0
+      }
+    }
+  },
+  {
+    "cricsheetName": "W O'Rourke",
+    "seasonsActive": [
+      "2025"
+    ],
+    "playedAll3Years": false,
+    "statsSummary": {
+      "2025": {
+        "cricsheetName": "W O'Rourke",
+        "matches": 3,
+        "batInnings": 0,
+        "runs": 0,
+        "ballsFaced": 0,
+        "dismissals": 0,
+        "notOuts": 0,
+        "fours": 0,
+        "sixes": 0,
+        "fifties": 0,
+        "hundreds": 0,
+        "batAvg": 0.0,
+        "strikeRate": 0.0,
+        "bowlInnings": 3,
+        "ballsBowled": 62,
+        "runsConceded": 132.0,
+        "wickets": 6,
+        "bowlEcon": 12.77,
+        "bowlStrikeRate": 10.33,
+        "bowlAvg": 22.0
+      }
+    }
+  },
+  {
+    "cricsheetName": "WP Saha",
+    "seasonsActive": [
+      "2024"
+    ],
+    "playedAll3Years": false,
+    "statsSummary": {
+      "2024": {
+        "cricsheetName": "WP Saha",
+        "matches": 9,
+        "batInnings": 9,
+        "runs": 136,
+        "ballsFaced": 115,
+        "dismissals": 9,
+        "notOuts": 0,
+        "fours": 18,
+        "sixes": 3,
+        "fifties": 0,
+        "hundreds": 0,
+        "batAvg": 15.11,
+        "strikeRate": 118.26,
+        "bowlInnings": 0,
+        "ballsBowled": 0,
+        "runsConceded": 0,
+        "wickets": 0,
+        "bowlEcon": 0.0,
+        "bowlStrikeRate": 0.0,
+        "bowlAvg": 0.0
+      }
+    }
+  },
+  {
+    "cricsheetName": "Yudhvir Singh",
+    "seasonsActive": [
+      "2024",
+      "2025"
+    ],
+    "playedAll3Years": false,
+    "statsSummary": {
+      "2024": {
+        "cricsheetName": "Yudhvir Singh",
+        "matches": 2,
+        "batInnings": 2,
+        "runs": 21,
+        "ballsFaced": 14,
+        "dismissals": 2,
+        "notOuts": 0,
+        "fours": 1,
+        "sixes": 2,
+        "fifties": 0,
+        "hundreds": 0,
+        "batAvg": 10.5,
+        "strikeRate": 150.0,
+        "bowlInnings": 2,
+        "ballsBowled": 24,
+        "runsConceded": 52,
+        "wickets": 1,
+        "bowlEcon": 13.0,
+        "bowlStrikeRate": 24.0,
+        "bowlAvg": 52.0
+      },
+      "2025": {
+        "cricsheetName": "Yudhvir Singh",
+        "matches": 4,
+        "batInnings": 0,
+        "runs": 0,
+        "ballsFaced": 0,
+        "dismissals": 0,
+        "notOuts": 0,
+        "fours": 0,
+        "sixes": 0,
+        "fifties": 0,
+        "hundreds": 0,
+        "batAvg": 0.0,
+        "strikeRate": 0.0,
+        "bowlInnings": 4,
+        "ballsBowled": 66,
+        "runsConceded": 131.0,
+        "wickets": 4,
+        "bowlEcon": 11.91,
+        "bowlStrikeRate": 16.5,
+        "bowlAvg": 32.75
+      }
+    }
+  }
+]
